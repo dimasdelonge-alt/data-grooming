@@ -3,7 +3,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 import '../data/entity/expense.dart';
 import '../data/entity/session.dart';
 import '../data/entity/cat.dart';

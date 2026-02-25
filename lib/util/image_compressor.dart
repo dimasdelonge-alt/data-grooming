@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 
 // Conditional imports: dart:io is not available on web
 import 'image_compressor_native.dart'

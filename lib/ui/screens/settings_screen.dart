@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import '../grooming_view_model.dart';
 import '../../util/security_preferences.dart';
 // import 'admin_dashboard_screen.dart'; // Removed legacy admin

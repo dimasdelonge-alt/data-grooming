@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 // Conditional import
 import 'offline_backup_native.dart' if (dart.library.js_interop) 'offline_backup_web.dart' as platform;

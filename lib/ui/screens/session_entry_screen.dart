@@ -10,7 +10,6 @@ import '../../data/entity/session.dart';
 import '../../data/entity/deposit_entities.dart';
 import '../../util/date_utils.dart' as app_date;
 import '../../util/currency_formatter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../util/whatsapp_utils.dart';
 
