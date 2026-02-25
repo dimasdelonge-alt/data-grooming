@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import '../grooming_view_model.dart';
 import '../../util/date_utils.dart' as app_date;
@@ -56,7 +57,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         ? () => _showConnectDialog(context, vm)
                         : null,
                   ),
-                  if (vm.currentShopId.isNotEmpty) ...[
+                  if (vm.currentShopId.isNotEmpty && !kIsWeb) ...[
                     const Divider(height: 1),
                     _SecretKeyTile(secretKey: vm.currentSecretKey),
                   ],
@@ -100,8 +101,9 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
               ),
 
-             const SizedBox(height: 24),
-              
+              if (!kIsWeb) ...[
+              const SizedBox(height: 24),
+               
               // ─── Offline Backup ────────────────────────────────────────────
               _SectionHeader('Backup & Restore Lokal'),
               Card(
@@ -125,6 +127,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ],
                 ),
               ),
+              ],
 
               if (vm.isLoading)
                 const Padding(
