@@ -648,8 +648,30 @@ class GroomingDao {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // CLEAR ALL DATA (for clean restore)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<void> clearAllData() async {
+    final db = await _db;
+    // Delete child tables first (FOREIGN KEY order)
+    await db.delete('deposit_transactions');
+    await db.delete('owner_deposits');
+    await db.delete('hotel_addons');
+    await db.delete('hotel_bookings');
+    await db.delete('hotel_rooms');
+    await db.delete('session_photos');
+    await db.delete('sessions');
+    await db.delete('bookings');
+    await db.delete('expenses');
+    await db.delete('chip_options');
+    await db.delete('grooming_services');
+    await db.delete('cats');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // ONE-SHOT FETCHES FOR FULL SYNC
   // ═══════════════════════════════════════════════════════════════════════════
+
 
   Future<List<Cat>> getAllCatsSync() async {
     final db = await _db;

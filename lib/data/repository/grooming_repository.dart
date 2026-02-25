@@ -299,6 +299,11 @@ class GroomingRepository {
 
     print('fullRestoreFromCloud: Data fetched! cats=${cloudData.cats.length}, sessions=${cloudData.sessions.length}, rooms=${cloudData.hotelRooms.length}, hotelBookings=${cloudData.hotelBookings.length}, services=${cloudData.services.length}, expenses=${cloudData.expenses.length}, chips=${cloudData.chipOptions.length}, bookings=${cloudData.bookings.length}, hotelAdds=${cloudData.hotelAdds.length}, deposits=${cloudData.ownerDeposits.length}, photos=${cloudData.catPhotos.length}');
 
+    // 0. Clear all local data first (clean slate for restore)
+    print('fullRestoreFromCloud: Clearing local database...');
+    await _dao.clearAllData();
+    print('fullRestoreFromCloud: Local database cleared.');
+
     // 1. Restore Cats
     if (cloudData.cats.isNotEmpty) {
       int catCount = 0;
