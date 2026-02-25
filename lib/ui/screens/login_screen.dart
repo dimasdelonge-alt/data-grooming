@@ -119,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final message = shopId.isNotEmpty
         ? 'Halo, saya lupa password SmartGroomer. Shop ID saya: $shopId'
         : 'Halo, saya lupa password SmartGroomer.';
-    final url = Uri.parse('https://wa.me/6281234567890?text=${Uri.encodeComponent(message)}');
+    final url = Uri.parse('https://wa.me/6282137895794?text=${Uri.encodeComponent(message)}');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
