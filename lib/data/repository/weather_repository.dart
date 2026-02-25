@@ -8,21 +8,20 @@ class WeatherRepository {
 
   Future<String?> getCurrentWeatherIcon() async {
     try {
-      // 1. Get Location from IP
-      final ipResponse = await http.get(Uri.parse('http://ip-api.com/json'));
+      // 1. Get Location from IP (use HTTPS-compatible API)
+      final ipResponse = await http.get(Uri.parse('https://ipapi.co/json/'));
       if (ipResponse.statusCode != 200) {
         debugPrint("WeatherRepo: IP Look up failed HTTP ${ipResponse.statusCode}");
         return null;
       }
       
       final ipData = json.decode(ipResponse.body);
-      if (ipData['status'] != 'success') {
-        debugPrint("WeatherRepo: IP Look up failed API ${ipData['status']}");
+      final lat = ipData['latitude'];
+      final lon = ipData['longitude'];
+      if (lat == null || lon == null) {
+        debugPrint("WeatherRepo: IP Look up missing lat/lon");
         return null;
       }
-
-      final lat = ipData['lat'];
-      final lon = ipData['lon'];
 
       // 2. Get Weather
       final weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=$_openWeatherApiKey&units=metric";
