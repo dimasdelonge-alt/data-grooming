@@ -1,0 +1,58 @@
+name: datagrooming_v3
+description: "A new Flutter project for Jeni Cathouse."
+publish_to: 'none'
+
+version: 13.0.0+13
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  # Database & Storage
+  sqflite: ^2.3.0
+  sqflite_common_ffi: ^2.3.2
+  sqlite3_flutter_libs: ^0.5.24
+  path: ^1.8.3
+  path_provider: ^2.1.1
+  shared_preferences: ^2.2.2
+  
+  # Network & Utilities
+  http: ^1.1.0
+  intl: ^0.19.0
+  url_launcher: ^6.2.1
+  crypto: ^3.0.3
+  local_auth: ^2.1.6
+
+  # State Management & UI
+  provider: ^6.1.1
+  image_picker: ^1.0.7
+  flutter_image_compress: ^2.1.0
+  pdf: ^3.10.8
+
+  printing: 5.13.1
+  archive: ^3.3.7
+  file_picker: ^8.0.0
+  share_plus: ^9.0.0
+  flutter_local_notifications: ^21.0.0-dev.1
+  timezone: ^0.11.0
+  sqflite_common_ffi_web: ^0.4.3+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/logo_app.png"
+  adaptive_icon_background: "#2D1F47" # Dark Purple to match logo
+  adaptive_icon_foreground: "assets/logo_app.png"
+
+flutter:
+  uses-material-design: true
