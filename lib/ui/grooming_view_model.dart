@@ -264,7 +264,7 @@ class GroomingViewModel extends ChangeNotifier {
     }).join();
   }
 
-  Future<void> restoreData() async {
+  Future<bool> restoreData() async {
     _isLoading = true;
     notifyListeners();
     try {
@@ -273,8 +273,10 @@ class GroomingViewModel extends ChangeNotifier {
       debugPrint('Restore finished. Reloading data...');
       _init(); // Reload all data
       debugPrint('Data reloaded.');
+      return true;
     } catch (e) {
-       debugPrint('restoreData FATAL error: $e');
+      debugPrint('restoreData FATAL error: $e');
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

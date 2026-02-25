@@ -306,12 +306,19 @@ class _AccountScreenState extends State<AccountScreen> {
             child: const Text('Nanti Saja'),
           ),
           FilledButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              vm.restoreData();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Proses restore berjalan di latar belakang...')),
-              );
+              final success = await vm.restoreData();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success
+                      ? 'Restore berhasil! Data sedang diperbarui.'
+                      : 'Restore gagal! Periksa koneksi atau Secret Key Anda.'),
+                    backgroundColor: success ? Colors.green : Colors.red,
+                  ),
+                );
+              }
             },
             child: const Text('Ya, Restore'),
           ),
@@ -384,33 +391,20 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _SecretKeyTile extends StatefulWidget {
+class _SecretKeyTile extends StatelessWidget {
   final String secretKey;
   const _SecretKeyTile({required this.secretKey});
 
   @override
-  State<_SecretKeyTile> createState() => _SecretKeyTileState();
-}
-
-class _SecretKeyTileState extends State<_SecretKeyTile> {
-  bool _isVisible = false;
-
-  @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.vpn_key, color: Colors.orange),
-      title: const Text('Secret Key'),
+    return const ListTile(
+      leading: Icon(Icons.vpn_key, color: Colors.orange),
+      title: Text('Secret Key'),
       subtitle: Text(
-        _isVisible ? widget.secretKey : '••••••••',
+        '•••••••• (Tersembunyi demi keamanan)',
         style: TextStyle(
-          fontFamily: _isVisible ? 'Courier New' : null,
-          letterSpacing: _isVisible ? 0.0 : 2.0,
-          fontWeight: _isVisible ? FontWeight.normal : FontWeight.bold,
+          fontWeight: FontWeight.bold,
         ),
-      ),
-      trailing: IconButton(
-        icon: Icon(_isVisible ? Icons.visibility_off : Icons.visibility),
-        onPressed: () => setState(() => _isVisible = !_isVisible),
       ),
     );
   }

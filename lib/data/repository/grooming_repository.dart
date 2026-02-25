@@ -15,6 +15,7 @@ import '../../util/image_compressor.dart';
 import '../../util/offline_backup_manager.dart';
 import 'firebase_repository.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
 import '../source/database_helper.dart';
@@ -284,92 +285,173 @@ class GroomingRepository {
 
   Future<void> fullRestoreFromCloud() async {
     final shopId = _settingsPrefs.storeId;
-    if (shopId.isEmpty) return;
-
-    final cloudData = await _firebaseRepo.fetchAllSyncData(shopId);
-    if (cloudData == null) return;
-
-    // 1. Restore Cats (Dependencies for Bookings/Sessions)
-    for (final cat in cloudData.cats.values) {
-      await _dao.insertCat(cat);
+    if (shopId.isEmpty) {
+      print('fullRestoreFromCloud: shopId is empty, aborting.');
+      return;
     }
 
-    // 2. Restore Rooms (Dependency for Hotel Bookings)
-    for (final room in cloudData.hotelRooms.values) {
-      await _dao.insertRoom(room);
+    print('fullRestoreFromCloud: Fetching data for shopId=$shopId ...');
+    final cloudData = await _firebaseRepo.fetchAllSyncData(shopId);
+    if (cloudData == null) {
+      print('fullRestoreFromCloud: cloudData is null (no data on Firebase), aborting.');
+      return;
+    }
+
+    print('fullRestoreFromCloud: Data fetched! cats=${cloudData.cats.length}, sessions=${cloudData.sessions.length}, rooms=${cloudData.hotelRooms.length}, hotelBookings=${cloudData.hotelBookings.length}, services=${cloudData.services.length}, expenses=${cloudData.expenses.length}, chips=${cloudData.chipOptions.length}, bookings=${cloudData.bookings.length}, hotelAdds=${cloudData.hotelAdds.length}, deposits=${cloudData.ownerDeposits.length}, photos=${cloudData.catPhotos.length}');
+
+    // 1. Restore Cats
+    if (cloudData.cats.isNotEmpty) {
+      int catCount = 0;
+      for (final cat in cloudData.cats.values) {
+        try {
+          await _dao.insertCat(cat);
+          catCount++;
+        } catch (e) {
+          print('fullRestoreFromCloud: Error inserting cat ${cat.catId}: $e');
+        }
+      }
+      print('fullRestoreFromCloud: Inserted $catCount cats.');
+    }
+
+    // 2. Restore Rooms
+    if (cloudData.hotelRooms.isNotEmpty) {
+      int roomCount = 0;
+      for (final room in cloudData.hotelRooms.values) {
+        try {
+          await _dao.insertRoom(room);
+          roomCount++;
+        } catch (e) {
+          print('fullRestoreFromCloud: Error inserting room ${room.id}: $e');
+        }
+      }
+      print('fullRestoreFromCloud: Inserted $roomCount hotel rooms.');
     }
 
     // 3. Restore Sessions
-    for (final session in cloudData.sessions.values) {
-      try {
-        await _dao.insertSession(session);
-      } catch (e) {
-        // e.g. FOREIGN KEY constraint failed if cat is missing
-        print('Skipping session ${session.sessionId} (restore error): $e');
+    if (cloudData.sessions.isNotEmpty) {
+      int sessionCount = 0;
+      for (final session in cloudData.sessions.values) {
+        try {
+          await _dao.insertSession(session);
+          sessionCount++;
+        } catch (e) {
+          print('fullRestoreFromCloud: Error inserting session ${session.sessionId}: $e');
+        }
       }
+      print('fullRestoreFromCloud: Inserted $sessionCount sessions.');
     }
 
-    // 4. Restore Hotel Bookings (Now safe as Rooms & Cats exist)
-    for (final booking in cloudData.hotelBookings.values) {
-      try {
-        await _dao.insertHotelBooking(booking);
-      } catch (e) {
-        print('Skipping booking ${booking.id} (restore error): $e');
+    // 4. Restore Hotel Bookings
+    if (cloudData.hotelBookings.isNotEmpty) {
+      int bookingCount = 0;
+      for (final booking in cloudData.hotelBookings.values) {
+        try {
+          await _dao.insertHotelBooking(booking);
+          bookingCount++;
+        } catch (e) {
+          print('fullRestoreFromCloud: Error inserting hotel booking ${booking.id}: $e');
+        }
       }
+      print('fullRestoreFromCloud: Inserted $bookingCount hotel bookings.');
     }
 
     // 5. Restore Services
-    for (final service in cloudData.services.values) {
-      await _dao.insertService(service);
+    if (cloudData.services.isNotEmpty) {
+      int serviceCount = 0;
+      for (final service in cloudData.services.values) {
+        try {
+          await _dao.insertService(service);
+          serviceCount++;
+        } catch (e) {
+          print('fullRestoreFromCloud: Error inserting service ${service.id}: $e');
+        }
+      }
+      print('fullRestoreFromCloud: Inserted $serviceCount services.');
     }
 
     // 6. Restore Expenses
-    for (final expense in cloudData.expenses.values) {
-      await _dao.insertExpense(expense);
+    if (cloudData.expenses.isNotEmpty) {
+      int expenseCount = 0;
+      for (final expense in cloudData.expenses.values) {
+        try {
+          await _dao.insertExpense(expense);
+          expenseCount++;
+        } catch (e) {
+          print('fullRestoreFromCloud: Error inserting expense ${expense.id}: $e');
+        }
+      }
+      print('fullRestoreFromCloud: Inserted $expenseCount expenses.');
     }
 
-    // 6.5 Restore Chip Options (Findings & Treatments)
+    // 6.5 Restore Chip Options
     if (cloudData.chipOptions.isNotEmpty) {
+      int chipCount = 0;
       for (final option in cloudData.chipOptions.values) {
-        await _dao.insertOption(option);
+        try {
+          await _dao.insertOption(option);
+          chipCount++;
+        } catch (e) {
+          print('fullRestoreFromCloud: Error inserting chip ${option.id}: $e');
+        }
       }
+      print('fullRestoreFromCloud: Inserted $chipCount chip options.');
     }
 
     // 6.6 Restore Grooming Bookings
     if (cloudData.bookings.isNotEmpty) {
+      int bookingCount = 0;
       for (final booking in cloudData.bookings.values) {
         try {
           await _dao.insertBooking(booking);
+          bookingCount++;
         } catch (e) {
           print('Skipping grooming booking ${booking.bookingId} (restore error): $e');
         }
       }
+      print('fullRestoreFromCloud: Inserted $bookingCount grooming bookings.');
     }
 
     // 6.7 Restore Hotel Add-ons
     if (cloudData.hotelAdds.isNotEmpty) {
+      int addOnCount = 0;
       for (final addOn in cloudData.hotelAdds.values) {
         try {
           await _dao.insertAddOn(addOn);
+          addOnCount++;
         } catch (e) {
           print('Skipping hotel add-on ${addOn.id} (restore error): $e');
         }
       }
+      print('fullRestoreFromCloud: Inserted $addOnCount hotel add-ons.');
     }
 
     // 6.8 Restore Deposits
     if (cloudData.ownerDeposits.isNotEmpty) {
+      int depositCount = 0;
       for (final deposit in cloudData.ownerDeposits.values) {
-        await _dao.insertDeposit(deposit);
+        try {
+          await _dao.insertDeposit(deposit);
+          depositCount++;
+        } catch (e) {
+          print('Skipping owner deposit ${deposit.ownerPhone} (restore error): $e');
+        }
       }
+      print('fullRestoreFromCloud: Inserted $depositCount owner deposits.');
     }
     if (cloudData.depositTransactions.isNotEmpty) {
+      int transCount = 0;
       for (final transaction in cloudData.depositTransactions.values) {
-        await _dao.insertDepositTransaction(transaction);
+        try {
+          await _dao.insertDepositTransaction(transaction);
+          transCount++;
+        } catch (e) {
+          print('Skipping transaction ${transaction.id} (restore error): $e');
+        }
       }
+      print('fullRestoreFromCloud: Inserted $transCount deposit transactions.');
     }
 
-    // 7. Restore Shop Identity (Name, Phone, Address)
+    // 7. Restore Shop Identity
     final identity = await _firebaseRepo.getShopIdentity(shopId);
     if (identity != null) {
       final name = identity['shopName'];
@@ -387,20 +469,34 @@ class GroomingRepository {
     }
 
     // 8. Restore Cat Photos (Download Base64 -> Save File -> Update Cat)
-    for (final entry in cloudData.catPhotos.entries) {
-      final catId = int.tryParse(entry.key);
-      final base64Image = entry.value;
-      if (catId != null && base64Image.isNotEmpty) {
-        final savedPath = await ImageCompressor.saveImageFromBase64(base64Image, 'cat_$catId.jpg');
-        if (savedPath != null) {
-          final cat = await _dao.getCatById(catId);
-          if (cat != null) {
-            await _dao.updateCat(cat.copyWith(imagePath: savedPath));
+    // Skip on web as file system is not supported
+    if (!kIsWeb) {
+      print('fullRestoreFromCloud: Restoring ${cloudData.catPhotos.length} cat photos...');
+      int photoCount = 0;
+      for (final entry in cloudData.catPhotos.entries) {
+        try {
+          final catId = int.tryParse(entry.key);
+          final base64Image = entry.value;
+          if (catId != null && base64Image.isNotEmpty) {
+            final savedPath = await ImageCompressor.saveImageFromBase64(base64Image, 'cat_$catId.jpg');
+            if (savedPath != null) {
+              final cat = await _dao.getCatById(catId);
+              if (cat != null) {
+                await _dao.updateCat(cat.copyWith(imagePath: savedPath));
+                photoCount++;
+              }
+            }
           }
+        } catch (e) {
+          print('fullRestoreFromCloud: Failed to restore photo for cat ${entry.key}: $e');
         }
       }
+      print('fullRestoreFromCloud: Restored $photoCount cat photos.');
+    } else {
+      print('fullRestoreFromCloud: Skipping cat photos on web.');
     }
 
+    print('fullRestoreFromCloud: \u2705 RESTORE COMPLETE!');
     _dataRestoredController.add(null);
   }
 

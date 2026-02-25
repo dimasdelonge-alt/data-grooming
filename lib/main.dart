@@ -41,7 +41,7 @@ void main() async {
   await initializeDateFormatting('id_ID', null);
   
   if (kIsWeb) {
-    databaseFactory = databaseFactoryFfiWeb;
+    databaseFactory = createDatabaseFactoryFfiWeb(noWebWorker: true);
   } else {
     // Desktop (Windows/Linux) FFI init
     try {
