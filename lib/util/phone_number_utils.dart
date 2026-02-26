@@ -21,8 +21,13 @@ class PhoneNumberUtils {
 
   /// Formats a phone number for WhatsApp API (starting with 62).
   static String formatForWhatsApp(String phone) {
-    // First normalize to remove spaces, dashes, etc.
+    // First normalize to remove spaces, dashes, etc. using strict Regex
     String clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    // Fix double region code typo (e.g. user types "+62 0895..." becoming "620895...")
+    if (clean.startsWith('620')) {
+      return '62${clean.substring(3)}';
+    }
     
     // If it starts with '0', replace with '62'
     if (clean.startsWith('0')) {
@@ -34,7 +39,12 @@ class PhoneNumberUtils {
       return clean;
     }
     
-    // Default fallback (though we expect 08 or 62)
+    // If it starts with '8', assume it's missing 62
+    if (clean.startsWith('8') && clean.length >= 9) {
+      return '62$clean';
+    }
+    
+    // Default fallback
     return clean;
   }
 }
