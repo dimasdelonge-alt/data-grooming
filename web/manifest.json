@@ -1,6 +1,6 @@
 {
-    "name": "SmartGroomer",
-    "short_name": "SmartGroomer",
+    "name": "Data Grooming App",
+    "short_name": "DataGrooming",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
