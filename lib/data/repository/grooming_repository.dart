@@ -95,6 +95,7 @@ class GroomingRepository {
 
   Future<void> deleteSession(Session session) async {
     await _dao.deleteSession(session);
+    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'sessions', session.sessionId.toString()));
     _sessionChangeController.add(null);
   }
 
