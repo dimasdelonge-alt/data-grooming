@@ -31,6 +31,12 @@
 
   <title>SmartGroomer</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- pdf.js required for printing package to rasterize PDF to PNG on web -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+  <script type="text/javascript">
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js";
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
