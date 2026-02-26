@@ -274,14 +274,40 @@ class GroomingRepository {
 
   Stream<List<OwnerDeposit>> getAllDeposits() => _dao.getAllDeposits();
   Future<OwnerDeposit?> getDeposit(String phone) => _dao.getDeposit(phone);
-  Future<void> insertDeposit(OwnerDeposit deposit) => _dao.insertDeposit(deposit);
-  Future<void> updateDeposit(OwnerDeposit deposit) => _dao.updateDeposit(deposit);
+  
+  Future<void> insertDeposit(OwnerDeposit deposit) async {
+    await _dao.insertDeposit(deposit);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncOwnerDeposit(shopId, deposit));
+  }
+  
+  Future<void> updateDeposit(OwnerDeposit deposit) async {
+    await _dao.updateDeposit(deposit);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncOwnerDeposit(shopId, deposit));
+  }
+  
   Stream<List<DepositTransaction>> getDepositTransactions(String phone) => _dao.getDepositTransactions(phone);
-  Future<void> insertDepositTransaction(DepositTransaction txn) => _dao.insertDepositTransaction(txn);
+  
+  Future<void> insertDepositTransaction(DepositTransaction txn) async {
+    await _dao.insertDepositTransaction(txn);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncDepositTransaction(shopId, txn));
+  }
+  
   Future<List<DepositTransaction>> getDepositTransactionsForRef(int refId) => _dao.getTransactionsByReferenceId(refId);
-  Future<void> deleteDeposit(OwnerDeposit deposit) => _dao.deleteDeposit(deposit);
-  Future<void> deleteDepositTransactions(String phone) => _dao.deleteDepositTransactions(phone);
-
+  
+  Future<void> deleteDeposit(OwnerDeposit deposit) async {
+    await _dao.deleteDeposit(deposit);
+    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'owner_deposits', deposit.ownerPhone));
+  }
+  
+  Future<void> deleteDepositTransactions(String phone) async {
+    final txns = await _dao.getDepositTransactions(phone).first;
+    await _dao.deleteDepositTransactions(phone);
+    for (final t in txns) {
+      if (t.id != null) {
+        _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'deposit_transactions', t.id.toString()));
+      }
+    }
+  }
   // ─── Cloud Restore ─────────────────────────────────────────────────────
 
   Future<void> fullRestoreFromCloud() async {

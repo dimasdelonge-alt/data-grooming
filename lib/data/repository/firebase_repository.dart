@@ -7,6 +7,7 @@ import '../entity/booking.dart';
 import '../entity/grooming_service.dart';
 import '../entity/expense.dart';
 import '../entity/chip_option.dart';
+import '../entity/deposit_entities.dart';
 import '../model/cloud_sync_data.dart';
 
 class FirebaseRepository {
@@ -243,6 +244,34 @@ class FirebaseRepository {
       );
     } catch (e) {
       print('syncChipOption error: $e');
+    }
+  }
+
+  Future<void> syncOwnerDeposit(
+      String shopId, OwnerDeposit deposit) async {
+    if (shopId.isEmpty) return;
+    try {
+      await http.put(
+        Uri.parse('$_baseUrl/sync/$shopId/owner_deposits/${deposit.ownerPhone}.json'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(deposit.toMap()),
+      );
+    } catch (e) {
+      print('syncOwnerDeposit error: $e');
+    }
+  }
+
+  Future<void> syncDepositTransaction(
+      String shopId, DepositTransaction txn) async {
+    if (shopId.isEmpty) return;
+    try {
+      await http.put(
+        Uri.parse('$_baseUrl/sync/$shopId/deposit_transactions/${txn.id}.json'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(txn.toMap()),
+      );
+    } catch (e) {
+      print('syncDepositTransaction error: $e');
     }
   }
 
