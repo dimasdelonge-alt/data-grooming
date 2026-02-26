@@ -93,7 +93,7 @@ class JeniCathouseApp extends StatelessWidget {
     final vm = context.watch<GroomingViewModel>();
 
     return MaterialApp(
-      title: 'Jeni Cathouse',
+      title: 'Data Grooming App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
