@@ -109,9 +109,9 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
       source: source,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 80,
+      maxWidth: 400,
+      maxHeight: 400,
+      imageQuality: 65,
     );
     if (pickedFile != null && mounted) {
       // Encode image to Base64

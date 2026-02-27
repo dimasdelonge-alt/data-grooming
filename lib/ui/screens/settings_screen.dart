@@ -24,7 +24,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _pickLogo(BuildContext context) async {
     try {
       final picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 65,
+      );
       
       if (image != null) {
         // Encode and compress to Base64
