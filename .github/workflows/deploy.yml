@@ -27,7 +27,13 @@ jobs:
         run: flutter pub get
 
       - name: Build Flutter Web
-        run: flutter build web --release --web-renderer canvaskit
+        run: flutter build web --release --no-wasm-dry-run
+
+      - name: Remove unnecessary SkWasm files (reduce ~34MB to ~12MB)
+        run: |
+          rm -f build/web/canvaskit/skwasm*
+          rm -f build/web/canvaskit/chromium/skwasm* 2>/dev/null || true
+          find build/web -name "*.symbols" -delete
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
