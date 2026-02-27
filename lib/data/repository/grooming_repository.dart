@@ -11,8 +11,8 @@ import '../entity/deposit_entities.dart';
 import '../entity/cat_last_session.dart';
 import '../model/cloud_sync_data.dart';
 import '../../util/settings_preferences.dart';
-import '../../util/image_compressor.dart';
 import '../../util/offline_backup_manager.dart';
+import '../../util/image_utils.dart';
 import 'firebase_repository.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
@@ -500,33 +500,25 @@ class GroomingRepository {
       }
     }
 
-    // 8. Restore Cat Photos (Download Base64 -> Save File -> Update Cat)
-    // Skip on web as file system is not supported
-    if (!kIsWeb) {
-      print('fullRestoreFromCloud: Restoring ${cloudData.catPhotos.length} cat photos...');
-      int photoCount = 0;
-      for (final entry in cloudData.catPhotos.entries) {
-        try {
-          final catId = int.tryParse(entry.key);
-          final base64Image = entry.value;
-          if (catId != null && base64Image.isNotEmpty) {
-            final savedPath = await ImageCompressor.saveImageFromBase64(base64Image, 'cat_$catId.jpg');
-            if (savedPath != null) {
-              final cat = await _dao.getCatById(catId);
-              if (cat != null) {
-                await _dao.updateCat(cat.copyWith(imagePath: savedPath));
-                photoCount++;
-              }
-            }
+    // 8. Restore Cat Photos (Save Base64 directly to Local DB)
+    print('fullRestoreFromCloud: Restoring ${cloudData.catPhotos.length} cat photos...');
+    int photoCount = 0;
+    for (final entry in cloudData.catPhotos.entries) {
+      try {
+        final catId = int.tryParse(entry.key);
+        final base64Image = entry.value;
+        if (catId != null && base64Image.isNotEmpty) {
+          final cat = await _dao.getCatById(catId);
+          if (cat != null) {
+            await _dao.updateCat(cat.copyWith(imagePath: base64Image));
+            photoCount++;
           }
-        } catch (e) {
-          print('fullRestoreFromCloud: Failed to restore photo for cat ${entry.key}: $e');
         }
+      } catch (e) {
+        print('fullRestoreFromCloud: Failed to restore photo for cat ${entry.key}: $e');
       }
-      print('fullRestoreFromCloud: Restored $photoCount cat photos.');
-    } else {
-      print('fullRestoreFromCloud: Skipping cat photos on web.');
     }
+    print('fullRestoreFromCloud: Restored $photoCount cat photos.');
 
     print('fullRestoreFromCloud: \u2705 RESTORE COMPLETE!');
     _dataRestoredController.add(null);
@@ -567,14 +559,15 @@ class GroomingRepository {
       final ownerDepositsMap = {for (final d in ownerDepositsList) d.ownerPhone: d};
       final depositTransactionsMap = {for (final t in depositTransactionsList) t.id.toString(): t};
 
-      // 2. Process Photos (Compress & Encode)
+      // 2. Process Photos
       final catPhotos = <String, String>{};
       for (final cat in cats) {
         if (cat.imagePath != null && cat.imagePath!.isNotEmpty) {
-           final compressed = await ImageCompressor.compressImage(cat.imagePath!);
-           if (compressed != null) {
-             catPhotos[cat.catId.toString()] = compressed;
-           }
+           // We now assume imagePath is either already Base64 (from PWA/new flow) or a local path.
+           // If it's already Base64, keep it. 
+           if (ImageUtils.isBase64Image(cat.imagePath!)) {
+              catPhotos[cat.catId.toString()] = cat.imagePath!;
+           } 
         }
       }
 

@@ -9,7 +9,6 @@ import '../data/entity/cat.dart';
 import '../data/entity/hotel_entities.dart';
 import '../data/entity/deposit_entities.dart';
 import '../data/model/hotel_models.dart';
-import 'dart:io';
 import 'dart:convert';
 import '../util/image_utils.dart';
 
@@ -17,29 +16,16 @@ class PdfGenerator {
   static const _primaryColor = PdfColors.orange;
   static const _pageFormat = PdfPageFormat.a4;
 
-  /// Load logo image from Base64 string or file path
+  /// Load logo image from Base64 string
   static pw.MemoryImage? _loadLogoImage(String? logoPath) {
     if (logoPath == null || logoPath.isEmpty) return null;
     
-    // 1. Try Base64
     if (ImageUtils.isBase64Image(logoPath)) {
       try {
         final bytes = base64Decode(logoPath);
         return pw.MemoryImage(bytes);
       } catch (e) {
         debugPrint("PDF Gen: Error decoding Base64 logo: $e");
-      }
-    }
-    
-    // 2. Try native file path (will gracefully fail on web if path is not bytes)
-    if (!kIsWeb) {
-      try {
-        final file = File(logoPath);
-        if (file.existsSync()) {
-          return pw.MemoryImage(file.readAsBytesSync());
-        }
-      } catch (e) {
-        debugPrint("PDF Gen: Error reading local logo file: $e");
       }
     }
     

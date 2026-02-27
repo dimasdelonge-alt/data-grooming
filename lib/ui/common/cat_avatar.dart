@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../util/image_utils.dart';
 import '../theme/theme.dart';
@@ -41,27 +39,8 @@ class CatAvatar extends StatelessWidget {
           avatar = _fallback(isDark);
         }
       } else {
-        // Fallback for old local file paths
-        if (!kIsWeb) {
-          final file = File(imagePath!);
-          if (file.existsSync()) {
-            avatar = ClipRRect(
-              borderRadius: BorderRadius.circular(size / 2),
-              child: Image.file(
-                file,
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallback(isDark),
-              ),
-            );
-          } else {
-            avatar = _fallback(isDark);
-          }
-        } else {
-           // On web, traditional file paths from Android won't work anyway
-           avatar = _fallback(isDark);
-        }
+        // Non-Base64 path (legacy) — show fallback
+        avatar = _fallback(isDark);
       }
     } else {
       avatar = _fallback(isDark);
