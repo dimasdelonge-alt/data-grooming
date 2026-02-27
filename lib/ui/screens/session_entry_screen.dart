@@ -484,7 +484,10 @@ class _EditSessionViewState extends State<_EditSessionView> {
       OwnerDeposit? deposit;
       if (cat != null && cat.ownerPhone.isNotEmpty) {
         final finVm = context.read<FinancialViewModel>();
-        deposit = finVm.deposits.where((d) => d.ownerPhone == cat.ownerPhone).firstOrNull;
+        final normalizedPhone = PhoneNumberUtils.normalize(cat.ownerPhone);
+        deposit = finVm.deposits.where((d) => 
+          PhoneNumberUtils.normalize(d.ownerPhone) == normalizedPhone
+        ).firstOrNull;
       }
 
       setState(() {

@@ -11,6 +11,7 @@ import '../../data/model/hotel_models.dart';
 import '../../util/date_utils.dart' as app_date;
 import '../../util/pdf_generator.dart';
 import '../common/cat_avatar.dart';
+import '../../util/phone_number_utils.dart';
 import 'package:intl/intl.dart';
 
 class HotelScreen extends StatefulWidget {
@@ -860,7 +861,10 @@ class _BillingGroupCard extends StatelessWidget {
 
   void _showCheckoutGroupDialog(BuildContext context, HotelViewModel vm, BillingGroup group) {
     final finVm = context.read<FinancialViewModel>();
-    final ownerDeposit = finVm.deposits.where((d) => d.ownerPhone == group.ownerPhone).firstOrNull;
+    final normalizedPhone = PhoneNumberUtils.normalize(group.ownerPhone);
+    final ownerDeposit = finVm.deposits.where((d) => 
+      PhoneNumberUtils.normalize(d.ownerPhone) == normalizedPhone
+    ).firstOrNull;
     bool useDeposit = false;
 
     showDialog(

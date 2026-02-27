@@ -5,6 +5,7 @@ import '../data/entity/expense.dart';
 import '../data/entity/deposit_entities.dart';
 import '../data/entity/session.dart';
 import '../data/entity/hotel_entities.dart';
+import '../util/phone_number_utils.dart';
 
 class FinancialViewModel extends ChangeNotifier {
   final GroomingRepository _repository;
@@ -198,19 +199,27 @@ class FinancialViewModel extends ChangeNotifier {
   }
 
   Future<void> deductDeposit(String phone, double amount, String notes, int? refId, {TransactionType transactionType = TransactionType.adjustment}) async {
-    final existing = await _repository.getDeposit(phone);
+    // Try exact match first, then normalized match
+    var existing = await _repository.getDeposit(phone);
+    if (existing == null) {
+      final normalized = PhoneNumberUtils.normalize(phone);
+      existing = await _repository.getDeposit(normalized);
+    }
     if (existing == null) throw Exception('Deposit account not found');
 
-    if (existing.balance < amount) throw Exception('Insufficient balance');
+    // Auto-cap amount to available balance (callers already calculate min,
+    // but fresh DB balance may differ from cached UI value)
+    final actualAmount = amount > existing.balance ? existing.balance : amount;
+    if (actualAmount <= 0) return; // Nothing to deduct
 
     final now = DateTime.now().millisecondsSinceEpoch;
-    final newBalance = existing.balance - amount;
+    final newBalance = existing.balance - actualAmount;
     
     await _repository.updateDeposit(existing.copyWith(balance: newBalance, lastUpdated: now));
     
     await _repository.insertDepositTransaction(DepositTransaction(
-      ownerPhone: phone,
-      amount: -amount, // Negative for deduction
+      ownerPhone: existing.ownerPhone,
+      amount: -actualAmount, // Negative for deduction
       type: transactionType,
       referenceId: refId,
       notes: notes,
