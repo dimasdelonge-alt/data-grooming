@@ -12,6 +12,7 @@ import '../../util/date_utils.dart' as app_date;
 import '../../util/currency_formatter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../util/whatsapp_utils.dart';
+import '../../util/phone_number_utils.dart';
 
 /// Grooming session entry screen.
 ///
