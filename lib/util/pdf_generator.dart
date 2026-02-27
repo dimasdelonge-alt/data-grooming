@@ -9,18 +9,41 @@ import '../data/entity/cat.dart';
 import '../data/entity/hotel_entities.dart';
 import '../data/entity/deposit_entities.dart';
 import '../data/model/hotel_models.dart';
-
-// Conditional import for dart:io  
-import 'pdf_generator_native.dart' if (dart.library.js_interop) 'pdf_generator_web.dart' as io_helper;
+import 'dart:io';
+import 'dart:convert';
+import '../util/image_utils.dart';
 
 class PdfGenerator {
   static const _primaryColor = PdfColors.orange;
   static const _pageFormat = PdfPageFormat.a4;
 
-  /// Load logo image from file path — returns null on web.
+  /// Load logo image from Base64 string or file path
   static pw.MemoryImage? _loadLogoImage(String? logoPath) {
-    if (logoPath == null) return null;
-    return io_helper.loadLogoImage(logoPath);
+    if (logoPath == null || logoPath.isEmpty) return null;
+    
+    // 1. Try Base64
+    if (ImageUtils.isBase64Image(logoPath)) {
+      try {
+        final bytes = base64Decode(logoPath);
+        return pw.MemoryImage(bytes);
+      } catch (e) {
+        debugPrint("PDF Gen: Error decoding Base64 logo: $e");
+      }
+    }
+    
+    // 2. Try native file path (will gracefully fail on web if path is not bytes)
+    if (!kIsWeb) {
+      try {
+        final file = File(logoPath);
+        if (file.existsSync()) {
+          return pw.MemoryImage(file.readAsBytesSync());
+        }
+      } catch (e) {
+        debugPrint("PDF Gen: Error reading local logo file: $e");
+      }
+    }
+    
+    return null;
   }
 
   static Future<void> printHotelInvoice({
@@ -1283,7 +1306,7 @@ class PdfGenerator {
     final sdf = DateFormat('dd MMM yyyy, HH:mm');
     final currencyFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-    pw.MemoryImage? logoImage = _loadLogoImage(logoPath);
+    // pw.MemoryImage? logoImage = _loadLogoImage(logoPath);
 
     doc.addPage(
       pw.Page(
@@ -1355,7 +1378,7 @@ class PdfGenerator {
     final sdf = DateFormat('dd/MM/yy');
     final currencyFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-    pw.MemoryImage? logoImage = _loadLogoImage(logoPath);
+    // pw.MemoryImage? logoImage = _loadLogoImage(logoPath);
 
     doc.addPage(
       pw.MultiPage(
@@ -1617,7 +1640,7 @@ class PdfGenerator {
 
   static Future<void> _handleShare(Uint8List bytes, String filename) async {
     try {
-      await io_helper.shareDocument(bytes, filename);
+      await Printing.sharePdf(bytes: bytes, filename: '$filename.pdf');
     } catch (e) {
       debugPrint('Share error: $e');
       await Printing.layoutPdf(onLayout: (format) async => bytes, name: filename);

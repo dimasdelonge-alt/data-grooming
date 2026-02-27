@@ -1,8 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../util/image_utils.dart';
 import '../theme/theme.dart';
-
-// Conditional import for dart:io File
-import 'cat_avatar_native.dart' if (dart.library.js_interop) 'cat_avatar_web.dart' as platform;
 
 class CatAvatar extends StatelessWidget {
   final String? imagePath;
@@ -23,11 +24,45 @@ class CatAvatar extends StatelessWidget {
     Widget avatar;
 
     if (imagePath != null && imagePath!.isNotEmpty) {
-      avatar = platform.buildFileImage(
-        imagePath: imagePath!,
-        size: size,
-        fallback: _fallback(isDark),
-      );
+      if (ImageUtils.isBase64Image(imagePath!)) {
+        try {
+          final bytes = base64Decode(imagePath!);
+          avatar = ClipRRect(
+            borderRadius: BorderRadius.circular(size / 2),
+            child: Image.memory(
+              bytes,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _fallback(isDark),
+            ),
+          );
+        } catch (e) {
+          avatar = _fallback(isDark);
+        }
+      } else {
+        // Fallback for old local file paths
+        if (!kIsWeb) {
+          final file = File(imagePath!);
+          if (file.existsSync()) {
+            avatar = ClipRRect(
+              borderRadius: BorderRadius.circular(size / 2),
+              child: Image.file(
+                file,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _fallback(isDark),
+              ),
+            );
+          } else {
+            avatar = _fallback(isDark);
+          }
+        } else {
+           // On web, traditional file paths from Android won't work anyway
+           avatar = _fallback(isDark);
+        }
+      }
     } else {
       avatar = _fallback(isDark);
     }

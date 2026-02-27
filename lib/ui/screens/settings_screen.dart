@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:convert' as dart_convert;
 import '../grooming_view_model.dart';
 import '../../util/security_preferences.dart';
-// import 'admin_dashboard_screen.dart'; // Removed legacy admin
+import '../../util/image_utils.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -21,22 +22,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _storeIdController = TextEditingController();
 
   Future<void> _pickLogo(BuildContext context) async {
-    if (kIsWeb) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ganti logo belum tersedia di versi web.')),
-        );
-      }
-      return;
-    }
     try {
       final picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       
       if (image != null) {
-        // On native, save to documents directory
-        if (context.mounted) {
-          await context.read<GroomingViewModel>().updateLogo(image.path);
+        // Encode and compress to Base64
+        final bytes = await image.readAsBytes();
+        final base64Str = await ImageUtils.compressAndEncodeFromBytes(
+          bytes,
+          minWidth: 400,
+          minHeight: 400,
+          quality: 65
+        );
+
+        if (context.mounted && base64Str != null) {
+          await context.read<GroomingViewModel>().updateLogo(base64Str);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Logo berhasil diperbarui ✅')),
           );
@@ -128,11 +129,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 leading: CircleAvatar(
                   radius: 28,
                   backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                  child: vm.logoPath.isNotEmpty && !kIsWeb
+                  child: vm.logoPath.isNotEmpty
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(28),
-                          child: Image.asset('assets/logo_app.png', width: 56, height: 56, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.store, size: 28)),
+                          child: ImageUtils.isBase64Image(vm.logoPath) 
+                              ? Image.memory(
+                                  dart_convert.base64Decode(vm.logoPath),
+                                  width: 56, height: 56, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Icon(Icons.store, size: 28),
+                                )
+                              : Image.asset('assets/logo_app.png', width: 56, height: 56, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Icon(Icons.store, size: 28)),
                         )
                       : const Icon(Icons.store, size: 28),
                 ),

@@ -7,6 +7,7 @@ import '../theme/theme.dart';
 import '../common/cat_avatar.dart';
 import '../../data/entity/cat.dart';
 import '../../util/phone_number_utils.dart';
+import '../../util/image_utils.dart';
 
 class CatEntryScreen extends StatefulWidget {
   final int? catId;
@@ -113,7 +114,26 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
       imageQuality: 80,
     );
     if (pickedFile != null && mounted) {
-      setState(() => _imagePath = pickedFile.path);
+      // Encode image to Base64
+      setState(() => _isLoading = true);
+      String? base64Str;
+      
+      final bytes = await pickedFile.readAsBytes();
+      base64Str = await ImageUtils.compressAndEncodeFromBytes(
+        bytes, 
+        minWidth: 400, 
+        minHeight: 400, 
+        quality: 65
+      );
+      
+      if (mounted) {
+        setState(() {
+          if (base64Str != null) {
+            _imagePath = base64Str;
+          }
+          _isLoading = false;
+        });
+      }
     }
   }
 
