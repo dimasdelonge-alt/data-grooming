@@ -37,9 +37,15 @@ class ImageUtils {
   /// rather than a traditional local file path.
   static bool isBase64Image(String path) {
     if (path.isEmpty) return false;
-    if (path.contains('/') || path.contains('\\')) {
-       return false;
+    // Check if it looks like a file path or URL
+    if (path.startsWith('/') ||           // Unix absolute path: /data/user/...
+        path.startsWith('file:') ||       // file:// URI
+        path.startsWith('blob:') ||       // Web blob URL
+        path.startsWith('http') ||        // http or https URL
+        RegExp(r'^[A-Za-z]:\\').hasMatch(path)) {  // Windows path: C:\Users\...
+      return false;
     }
+    // If it's long and doesn't look like a path, it's likely base64
     return path.length > 100;
   }
 }
