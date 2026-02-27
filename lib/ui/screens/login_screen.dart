@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../data/repository/firebase_repository.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import '../../util/settings_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -55,10 +57,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final hashedInput = _hashPassword(password);
       if (storedKey == hashedInput) {
+        // Cek Limit Device
+        final subStatus = await _firebaseRepo.checkSubscriptionStatus(shopId);
+        if (widget.settingsPrefs.deviceId.isEmpty) {
+          widget.settingsPrefs.deviceId = "DEV-${DateTime.now().millisecondsSinceEpoch}";
+        }
+        
+        final deviceName = kIsWeb ? 'Web Browser' : (Platform.isAndroid ? 'Android Device' : 'iOS/Other Device');
+        final isAllowed = await _firebaseRepo.registerDevice(
+          shopId, 
+          widget.settingsPrefs.deviceId, 
+          deviceName, 
+          subStatus.maxDevices
+        );
+
+        if (!isAllowed) {
+          setState(() { 
+            _error = 'Login ditolak: Limit perangkat tercapai (${subStatus.maxDevices} device).\nSilakan upgrade ke PRO untuk akses lebih banyak.'; 
+            _isLoading = false; 
+          });
+          return;
+        }
+
         // Login berhasil
         widget.settingsPrefs.storeId = shopId;
         widget.settingsPrefs.syncSecretKey = hashedInput;
         widget.settingsPrefs.isCloudSyncEnabled = true;
+        widget.settingsPrefs.userPlan = subStatus.plan;
+        widget.settingsPrefs.maxDevices = subStatus.maxDevices;
+        widget.settingsPrefs.validUntil = subStatus.validUntil;
         widget.onLoginSuccess();
       } else {
         setState(() { _error = 'Password salah'; _isLoading = false; });
@@ -104,10 +131,24 @@ class _LoginScreenState extends State<LoginScreen> {
       final hashedPassword = _hashPassword(password);
       await _firebaseRepo.setSecretKey(shopId, hashedPassword);
 
+      // Manage Subscriptions & Devices for new accounts (Starter limit 1)
+      if (widget.settingsPrefs.deviceId.isEmpty) {
+        widget.settingsPrefs.deviceId = "DEV-${DateTime.now().millisecondsSinceEpoch}";
+      }
+      final deviceName = kIsWeb ? 'Web Browser' : (Platform.isAndroid ? 'Android Device' : 'iOS/Other Device');
+      await _firebaseRepo.registerDevice(
+        shopId, 
+        widget.settingsPrefs.deviceId, 
+        deviceName, 
+        1 // Default starter limit
+      );
+
       // Save locally
       widget.settingsPrefs.storeId = shopId;
       widget.settingsPrefs.syncSecretKey = hashedPassword;
       widget.settingsPrefs.isCloudSyncEnabled = true;
+      widget.settingsPrefs.userPlan = 'starter';
+      widget.settingsPrefs.maxDevices = 1;
       widget.onLoginSuccess();
     } catch (e) {
       setState(() { _error = 'Gagal membuat akun: $e'; _isLoading = false; });
