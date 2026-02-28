@@ -6,6 +6,7 @@ import '../../data/repository/firebase_repository.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../util/settings_preferences.dart';
+import '../../util/device_id_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   final SettingsPreferences settingsPrefs;
@@ -60,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Cek Limit Device
         final subStatus = await _firebaseRepo.checkSubscriptionStatus(shopId);
         if (widget.settingsPrefs.deviceId.isEmpty) {
-          widget.settingsPrefs.deviceId = "DEV-${DateTime.now().millisecondsSinceEpoch}";
+          widget.settingsPrefs.deviceId = DeviceIdHelper.generateDeviceId();
         }
         
         final deviceName = kIsWeb ? 'Web Browser' : (Platform.isAndroid ? 'Android Device' : 'iOS/Other Device');
@@ -133,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Manage Subscriptions & Devices for new accounts (Starter limit 1)
       if (widget.settingsPrefs.deviceId.isEmpty) {
-        widget.settingsPrefs.deviceId = "DEV-${DateTime.now().millisecondsSinceEpoch}";
+        widget.settingsPrefs.deviceId = DeviceIdHelper.generateDeviceId();
       }
       final deviceName = kIsWeb ? 'Web Browser' : (Platform.isAndroid ? 'Android Device' : 'iOS/Other Device');
       await _firebaseRepo.registerDevice(
