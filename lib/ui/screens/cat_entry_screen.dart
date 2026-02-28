@@ -106,35 +106,83 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
   }
 
   Future<void> _executePickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
-      source: source,
-      maxWidth: 400,
-      maxHeight: 400,
-      imageQuality: 65,
-    );
-    if (pickedFile != null && mounted) {
-      // Encode image to Base64
-      setState(() => _isLoading = true);
-      String? base64Str;
-      
-      final bytes = await pickedFile.readAsBytes();
-      base64Str = await ImageUtils.compressAndEncodeFromBytes(
-        bytes, 
-        minWidth: 400, 
-        minHeight: 400, 
-        quality: 65
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 65,
       );
-      
+      if (pickedFile == null) {
+        debugPrint('[ImagePick] User cancelled picker');
+        return;
+      }
+      if (!mounted) return;
+
+      setState(() => _isLoading = true);
+      debugPrint('[ImagePick] File picked: ${pickedFile.name}, mimeType: ${pickedFile.mimeType}');
+
+      // Step 1: Read bytes
+      final bytes = await pickedFile.readAsBytes();
+      debugPrint('[ImagePick] Bytes read: ${bytes.length} bytes');
+
+      if (bytes.isEmpty) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _showDebugError('Gagal baca file: bytes kosong (0 bytes)');
+        }
+        return;
+      }
+
+      // Step 2: Compress & encode
+      String? base64Str;
+      try {
+        base64Str = await ImageUtils.compressAndEncodeFromBytes(
+          bytes,
+          minWidth: 400,
+          minHeight: 400,
+          quality: 65,
+        );
+        debugPrint('[ImagePick] Compressed Base64 length: ${base64Str?.length ?? 0}');
+      } catch (compressError) {
+        debugPrint('[ImagePick] Compression error: $compressError');
+        if (mounted) {
+          _showDebugError('Kompresi gagal: $compressError');
+        }
+      }
+
+      // Step 3: Update state
       if (mounted) {
         setState(() {
-          if (base64Str != null) {
+          if (base64Str != null && base64Str.isNotEmpty) {
             _imagePath = base64Str;
+            debugPrint('[ImagePick] ✅ imagePath updated, length: ${base64Str.length}');
+          } else {
+            debugPrint('[ImagePick] ❌ base64Str is null or empty');
+            _showDebugError('Hasil kompresi kosong (null/empty)');
           }
           _isLoading = false;
         });
       }
+    } catch (e, stack) {
+      debugPrint('[ImagePick] ❌ Top-level error: $e\n$stack');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showDebugError('Error: $e');
+      }
     }
+  }
+
+  void _showDebugError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('[DEBUG] $message', style: const TextStyle(fontSize: 12)),
+        duration: const Duration(seconds: 8),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   Future<void> _save() async {
