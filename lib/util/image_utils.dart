@@ -2,19 +2,25 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
+// Conditional import for web compression
+import 'image_compress_stub.dart'
+    if (dart.library.js_interop) 'image_compress_web.dart' as web_compress;
+
 class ImageUtils {
 
   /// Compresses image from bytes and returns Base64 string.
-  /// On Web: skips compression (flutter_image_compress crashes on web),
-  /// just encodes raw bytes directly.
-  /// On Native: compresses then encodes.
+  /// On Web: uses HTML Canvas to resize & convert to JPEG.
+  /// On Native: uses flutter_image_compress.
   static Future<String?> compressAndEncodeFromBytes(Uint8List bytes, {int minWidth = 400, int minHeight = 400, int quality = 65}) async {
     try {
       if (kIsWeb) {
-        // flutter_image_compress throws Uncaught Errors on web.
-        // Just encode raw bytes directly — image_picker already provides
-        // reasonably sized images from the gallery picker.
-        return base64Encode(bytes);
+        // Use Canvas-based compression on web
+        return await web_compress.compressImageOnWeb(
+          bytes,
+          maxWidth: minWidth,
+          maxHeight: minHeight,
+          quality: quality / 100.0,
+        );
       }
 
       // Native: compress then encode

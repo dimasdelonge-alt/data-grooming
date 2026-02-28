@@ -1,7 +1,12 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../util/image_utils.dart';
 import '../theme/theme.dart';
+
+// Conditional import for web blob URL support
+import 'cat_avatar_image_stub.dart'
+    if (dart.library.js_interop) 'cat_avatar_image_web.dart' as platform_image;
 
 class CatAvatar extends StatelessWidget {
   final String? imagePath;
@@ -23,20 +28,34 @@ class CatAvatar extends StatelessWidget {
 
     if (imagePath != null && imagePath!.isNotEmpty) {
       if (ImageUtils.isBase64Image(imagePath!)) {
-        try {
-          final bytes = base64Decode(imagePath!);
+        if (kIsWeb) {
+          // Web: use Blob URL to bypass data URI size limits on mobile browsers
           avatar = ClipRRect(
             borderRadius: BorderRadius.circular(size / 2),
-            child: Image.memory(
-              bytes,
+            child: platform_image.buildWebImage(
+              base64String: imagePath!,
               width: size,
               height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _fallback(isDark),
+              fallback: _fallback(isDark),
             ),
           );
-        } catch (e) {
-          avatar = _fallback(isDark);
+        } else {
+          // Native: use Image.memory as before
+          try {
+            final bytes = base64Decode(imagePath!);
+            avatar = ClipRRect(
+              borderRadius: BorderRadius.circular(size / 2),
+              child: Image.memory(
+                bytes,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _fallback(isDark),
+              ),
+            );
+          } catch (e) {
+            avatar = _fallback(isDark);
+          }
         }
       } else {
         // Non-Base64 path (legacy) — show fallback
