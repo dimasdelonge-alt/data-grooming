@@ -445,9 +445,9 @@ class FirebaseRepository {
     }
   }
 
-  /// Removes old/orphan web device entries from Firebase.
-  /// Cleans up: DEV-xxx (old timestamp web IDs) and WEB-xxx (old fingerprint IDs).
-  /// Only keeps the current WEB- device ID.
+  /// Removes old timestamp-based web device entries (DEV-xxx with deviceName 'Web Browser')
+  /// that were created before fingerprint-based IDs (WEB-xxx).
+  /// Does NOT remove other WEB- entries, allowing multiple web devices (PC + mobile).
   Future<void> _cleanupOldWebDevices(String shopId, String currentDeviceId) async {
     try {
       final response = await http.get(
@@ -459,14 +459,11 @@ class FirebaseRepository {
           for (final entry in decoded.entries) {
             final id = entry.key as String;
             final data = entry.value;
-            if (id == currentDeviceId) continue; // Keep current device
-
-            final isOldWebTimestamp = id.startsWith('DEV-') &&
+            // Only remove old DEV- entries that were web browsers
+            if (id != currentDeviceId &&
+                id.startsWith('DEV-') &&
                 data is Map &&
-                data['deviceName'] == 'Web Browser';
-            final isOldWebFingerprint = id.startsWith('WEB-');
-
-            if (isOldWebTimestamp || isOldWebFingerprint) {
+                data['deviceName'] == 'Web Browser') {
               await http.delete(
                 Uri.parse('$_baseUrl/credentials/$shopId/devices/$id.json'),
               );
@@ -477,6 +474,19 @@ class FirebaseRepository {
       }
     } catch (e) {
       print('[DeviceCleanup] Error: $e');
+    }
+  }
+
+  /// Removes a specific device from Firebase (used on logout/disconnect).
+  Future<void> removeDevice(String shopId, String deviceId) async {
+    if (shopId.isEmpty || deviceId.isEmpty) return;
+    try {
+      await http.delete(
+        Uri.parse('$_baseUrl/credentials/$shopId/devices/$deviceId.json'),
+      );
+      print('[Device] Removed device: $deviceId');
+    } catch (e) {
+      print('[Device] removeDevice error: $e');
     }
   }
 

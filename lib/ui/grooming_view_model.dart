@@ -202,9 +202,17 @@ class GroomingViewModel extends ChangeNotifier {
   }
 
   Future<void> disconnectShop() async {
+    // Remove device from Firebase first (free up the slot)
+    final shopId = _settingsPrefs.storeId;
+    final deviceId = _settingsPrefs.deviceId;
+    if (shopId.isNotEmpty && deviceId.isNotEmpty) {
+      await _firebaseRepo.removeDevice(shopId, deviceId);
+    }
+
     _settingsPrefs.storeId = '';
     _settingsPrefs.syncSecretKey = '';
     _settingsPrefs.isCloudSyncEnabled = false;
+    _settingsPrefs.deviceId = '';
     notifyListeners();
   }
 
