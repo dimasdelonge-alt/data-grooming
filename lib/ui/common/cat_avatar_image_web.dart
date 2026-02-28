@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:web/web.dart' as web;
 
@@ -14,8 +15,12 @@ Widget buildWebImage({
   required Widget fallback,
 }) {
   try {
+    debugPrint('[CatAvatarWeb] buildWebImage called. Base64 length: ${base64String.length}');
     final bytes = base64Decode(base64String);
-    final blobUrl = _createBlobUrl(Uint8List.fromList(bytes));
+    debugPrint('[CatAvatarWeb] Decoded to ${bytes.length} bytes');
+    final uint8 = Uint8List.fromList(bytes);
+    final blobUrl = _createBlobUrl(uint8);
+    debugPrint('[CatAvatarWeb] Blob URL: $blobUrl');
 
     return _BlobImage(
       blobUrl: blobUrl,
@@ -23,7 +28,8 @@ Widget buildWebImage({
       height: height,
       fallback: fallback,
     );
-  } catch (e) {
+  } catch (e, stack) {
+    debugPrint('[CatAvatarWeb] ❌ buildWebImage error: $e\n$stack');
     return fallback;
   }
 }
@@ -54,22 +60,61 @@ class _BlobImage extends StatefulWidget {
 }
 
 class _BlobImageState extends State<_BlobImage> {
+  late String _activeBlobUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeBlobUrl = widget.blobUrl;
+    debugPrint('[BlobImage] initState with URL: $_activeBlobUrl');
+  }
+
+  @override
+  void didUpdateWidget(covariant _BlobImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.blobUrl != widget.blobUrl) {
+      debugPrint('[BlobImage] Widget updated, new URL: ${widget.blobUrl}');
+      // Revoke old URL and use new one
+      try {
+        web.URL.revokeObjectURL(_activeBlobUrl);
+      } catch (_) {}
+      _activeBlobUrl = widget.blobUrl;
+    }
+  }
+
   @override
   void dispose() {
+    debugPrint('[BlobImage] dispose, revoking: $_activeBlobUrl');
     try {
-      web.URL.revokeObjectURL(widget.blobUrl);
+      web.URL.revokeObjectURL(_activeBlobUrl);
     } catch (_) {}
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[BlobImage] build() with URL: $_activeBlobUrl');
     return Image.network(
-      widget.blobUrl,
+      _activeBlobUrl,
       width: widget.width,
       height: widget.height,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => widget.fallback,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          debugPrint('[BlobImage] ✅ Image loaded successfully');
+          return child;
+        }
+        debugPrint('[BlobImage] Loading... ${loadingProgress.cumulativeBytesLoaded}/${loadingProgress.expectedTotalBytes ?? "?"}');
+        return SizedBox(
+          width: widget.width,
+          height: widget.height,
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        );
+      },
+      errorBuilder: (_, error, stack) {
+        debugPrint('[BlobImage] ❌ Image.network error: $error');
+        return widget.fallback;
+      },
     );
   }
 }
