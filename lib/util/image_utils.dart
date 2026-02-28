@@ -44,10 +44,18 @@ class ImageUtils {
   static bool isBase64Image(String path) {
     if (path.isEmpty) return false;
     // Check if it looks like a file path or URL
-    if (path.startsWith('/') ||           // Unix absolute path: /data/user/...
+    // NOTE: JPEG Base64 starts with "/9j/" — so we can't just check startsWith('/')
+    // Instead, check for real file path patterns
+    if (path.startsWith('/data/') ||      // Android app data path
+        path.startsWith('/storage/') ||   // Android storage path
+        path.startsWith('/tmp/') ||       // Temp directory
+        path.startsWith('/var/') ||       // iOS/Mac paths
+        path.startsWith('/Users/') ||     // Mac user paths
+        path.startsWith('/home/') ||      // Linux user paths
         path.startsWith('file:') ||       // file:// URI
         path.startsWith('blob:') ||       // Web blob URL
         path.startsWith('http') ||        // http or https URL
+        path.startsWith('content:') ||    // Android content URI
         RegExp(r'^[A-Za-z]:\\').hasMatch(path)) {  // Windows path: C:\Users\...
       return false;
     }
