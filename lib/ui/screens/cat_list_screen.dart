@@ -4,6 +4,7 @@ import '../grooming_view_model.dart';
 import '../theme/theme.dart';
 import '../common/cat_avatar.dart';
 import '../common/empty_state.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 class CatListScreen extends StatelessWidget {
   const CatListScreen({super.key});
@@ -27,7 +28,7 @@ class CatListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Kucing (${cats.length})'),
+        title: Text(AppLocalizations.of(context)!.catListCount(cats.length)),
         elevation: 0,
         actions: [
           PopupMenuButton<int>(
@@ -48,7 +49,7 @@ class CatListScreen extends StatelessWidget {
                       size: 20,
                     ),
                     const SizedBox(width: 10),
-                    Text(vm.showArchivedCats ? 'Sembunyikan Arsip' : 'Lihat Terarsip'),
+                    Text(vm.showArchivedCats ? AppLocalizations.of(context)!.hideArchived : AppLocalizations.of(context)!.viewArchived),
                   ],
                 ),
               ),
@@ -64,7 +65,7 @@ class CatListScreen extends StatelessWidget {
             child: TextField(
               onChanged: vm.onSearchQueryChanged,
               decoration: InputDecoration(
-                hintText: 'Cari kucing atau owner...',
+                hintText: AppLocalizations.of(context)!.searchCatOrOwner,
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
                 fillColor: isDark ? AppColors.darkCard : Colors.grey[100],
@@ -82,11 +83,11 @@ class CatListScreen extends StatelessWidget {
             child: cats.isEmpty
                 ? EmptyState(
                     message: vm.searchQuery.isNotEmpty
-                        ? 'Tidak ada kucing yang cocok dengan pencarian.'
-                        : 'Belum ada data kucing.',
+                        ? AppLocalizations.of(context)!.noCatsMatchSearch
+                        : AppLocalizations.of(context)!.noCatDataYet,
                     subMessage: vm.searchQuery.isNotEmpty
-                        ? 'Coba kata kunci lain.'
-                        : 'Tap tombol + untuk menambah kucing.',
+                        ? AppLocalizations.of(context)!.tryAnotherKeyword
+                        : AppLocalizations.of(context)!.tapPlusToAddCat,
                     icon: vm.searchQuery.isNotEmpty ? Icons.search_off_rounded : Icons.pets_rounded,
                   )
                 : ListView.separated(
@@ -106,7 +107,7 @@ class CatListScreen extends StatelessWidget {
                             onTap: () {
                               if (isLocked) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Data ini terkunci (Limit Starter 15). Silakan upgrade ke PRO!')),
+                                  SnackBar(content: Text(AppLocalizations.of(context)!.dataLockedStarterLimit)),
                                 );
                               } else {
                                 Navigator.pushNamed(context, '/cat_detail', arguments: cat.catId);
@@ -131,7 +132,7 @@ class CatListScreen extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          '${cat.breed} • ${cat.gender}',
+                                          '${cat.breed} • ${_getGenderLabel(cat.gender, AppLocalizations.of(context)!)}',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
@@ -190,7 +191,7 @@ class CatListScreen extends StatelessWidget {
         onPressed: () {
           if (isStarter && allCats.length >= 15) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Batas Starter 15 kucing tercapai! Silakan upgrade ke PRO.')),
+              SnackBar(content: Text(AppLocalizations.of(context)!.starterLimit15CatsReached)),
             );
           } else {
             Navigator.pushNamed(context, '/cat_entry');
@@ -199,5 +200,11 @@ class CatListScreen extends StatelessWidget {
         child: const Icon(Icons.add_rounded),
       ),
     );
+  }
+
+  String _getGenderLabel(String gender, AppLocalizations l10n) {
+    if (gender.toLowerCase() == 'male') return l10n.male;
+    if (gender.toLowerCase() == 'female') return l10n.female;
+    return gender;
   }
 }

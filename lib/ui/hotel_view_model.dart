@@ -172,12 +172,6 @@ class HotelViewModel extends ChangeNotifier {
       }
     }
 
-    // Sort keys by date descending?
-    final sortedKeys = bySession.keys.toList()..sort((a, b) {
-       // Extract date part? Or just use booking date.
-       // Better: Sort the resulting groups.
-       return 0;
-    });
 
     final groups = bySession.entries.map((entry) {
         final bookings = entry.value;
@@ -229,12 +223,6 @@ class HotelViewModel extends ChangeNotifier {
     });
 
     return groups;
-  }
-
-  String _monthName(int month) {
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    if (month < 1 || month > 12) return "";
-    return months[month - 1];
   }
 
   Future<void> addRoom(String name, double price, int capacity, String notes) async {

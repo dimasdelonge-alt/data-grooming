@@ -8,6 +8,7 @@ import '../../data/entity/session.dart';
 import '../../util/date_utils.dart' as app_date;
 import '../../util/pdf_generator.dart';
 import '../common/empty_state.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 /// Searchable list of all grooming sessions with multi-select for combined invoices.
 /// Multi-select restricts selection to same-owner cats only.
@@ -49,9 +50,10 @@ class _SessionListScreenState extends State<SessionListScreen> {
           _selectedIds.add(sessionId);
           _lockedOwnerName ??= owner;
         } else {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Hanya bisa memilih session dari pemilik yang sama ($_lockedOwnerName)'),
+              content: Text(l10n.onlySelectSameOwnerSession(_lockedOwnerName ?? '')),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -148,8 +150,9 @@ class _SessionListScreenState extends State<SessionListScreen> {
     } catch (e) {
       debugPrint('Error printing combined invoice: $e');
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mencetak: $e')),
+          SnackBar(content: Text(l10n.printFailed(e.toString()))),
         );
       }
     }
@@ -160,6 +163,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final vm = context.watch<GroomingViewModel>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final allSessions = vm.allSessions;
@@ -186,11 +190,11 @@ class _SessionListScreenState extends State<SessionListScreen> {
                 icon: const Icon(Icons.close_rounded),
                 onPressed: _cancelSelection,
               ),
-              title: Text('${_selectedIds.length} dipilih'),
+              title: Text(l10n.selectedCount(_selectedIds.length)),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.select_all_rounded),
-                  tooltip: 'Pilih Semua (owner $_lockedOwnerName)',
+                  tooltip: l10n.selectAllOwner(_lockedOwnerName ?? ''),
                   onPressed: () => _selectAllSameOwner(filtered),
                 ),
                 _isPrinting
@@ -200,14 +204,14 @@ class _SessionListScreenState extends State<SessionListScreen> {
                       )
                     : IconButton(
                         icon: const Icon(Icons.print_rounded),
-                        tooltip: 'Cetak Invoice Gabungan',
+                        tooltip: l10n.printCombinedInvoiceBtn,
                         onPressed: _selectedIds.isNotEmpty
                             ? () => _printCombinedInvoice(context)
                             : null,
                       ),
               ],
             )
-          : AppBar(title: const Text('Riwayat Session')),
+          : AppBar(title: Text(l10n.sessionHistoryTitle)),
       body: Column(
         children: [
           Padding(
@@ -215,7 +219,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
               decoration: InputDecoration(
-                hintText: 'Cari session...',
+                hintText: l10n.searchSession,
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _search.isNotEmpty
                     ? IconButton(
@@ -238,7 +242,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Owner: $_lockedOwnerName — hanya session dari owner ini yang bisa dipilih',
+                      l10n.ownerOnlySessionWarning(_lockedOwnerName ?? ''),
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.primary,
@@ -252,8 +256,8 @@ class _SessionListScreenState extends State<SessionListScreen> {
           Expanded(
             child: filtered.isEmpty
                 ? EmptyState(
-                    message: query.isEmpty ? 'Belum ada session.' : 'Tidak ditemukan.',
-                    subMessage: query.isEmpty ? 'Tap tombol + di detail kucing.' : 'Coba kata kunci lain.',
+                    message: query.isEmpty ? l10n.noSessionsYet : l10n.notFound,
+                    subMessage: query.isEmpty ? l10n.tapPlusButtonInCatDetail : l10n.tryAnotherKeyword,
                     icon: query.isEmpty ? Icons.spa_rounded : Icons.search_off_rounded,
                   )
                 : ListView.builder(
@@ -268,7 +272,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
                         opacity: isDifferentOwner ? 0.4 : 1.0,
                         child: _SessionCard(
                           session: session,
-                          catName: cat?.catName ?? 'Unknown',
+                          catName: cat?.catName ?? l10n.unknownCat,
                           catImage: cat?.imagePath,
                           isDark: isDark,
                           isSelected: isSelected,

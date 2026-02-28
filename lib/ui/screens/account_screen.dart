@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../grooming_view_model.dart';
 import '../../util/date_utils.dart' as app_date;
 import '../../util/whatsapp_utils.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -26,16 +27,17 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<GroomingViewModel>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Akun & Backup')),
+      appBar: AppBar(title: Text(l10n.accountAndBackup)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ─── Shop Connection ─────────────────────────────────────────────
-            _SectionHeader('Sinkronisasi Toko'),
+            _SectionHeader(l10n.shopSync),
             Card(
               clipBehavior: Clip.antiAlias,
               child: Column(
@@ -45,21 +47,26 @@ class _AccountScreenState extends State<AccountScreen> {
                       vm.currentShopId.isNotEmpty ? Icons.store_mall_directory : Icons.store_mall_directory_outlined,
                       color: vm.currentShopId.isNotEmpty ? Colors.green : Colors.grey,
                     ),
-                    title: Text(vm.currentShopId.isNotEmpty ? 'Toko Terhubung' : 'Hubungkan Toko'),
-                    subtitle: Text(vm.currentShopId.isNotEmpty ? 'ID: ${vm.currentShopId}' : 'Belum terhubung ke toko'),
+                    title: Text(vm.currentShopId.isNotEmpty ? l10n.shopConnected : l10n.connectShop),
+                    subtitle: Text(vm.currentShopId.isNotEmpty ? l10n.shopIdValue(vm.currentShopId) : l10n.notConnectedToShop),
                     trailing: vm.currentShopId.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.logout, color: Colors.red),
-                            onPressed: () => _showDisconnectDialog(context, vm),
+                            onPressed: () => _showDisconnectDialog(context, vm, l10n),
                           )
                         : const Icon(Icons.chevron_right_rounded),
                     onTap: vm.currentShopId.isEmpty
-                        ? () => _showConnectDialog(context, vm)
+                        ? () => _showConnectDialog(context, vm, l10n)
                         : null,
                   ),
-                  if (vm.currentShopId.isNotEmpty && !kIsWeb) ...[
+                  if (vm.currentShopId.isNotEmpty) ...[
                     const Divider(height: 1),
-                    _SecretKeyTile(secretKey: vm.currentSecretKey),
+                    ListTile(
+                      leading: const Icon(Icons.lock_reset, color: Colors.blue),
+                      title: Text(l10n.changePassword),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _showChangePasswordDialog(context, vm, l10n),
+                    ),
                   ],
                 ],
               ),
@@ -67,17 +74,17 @@ class _AccountScreenState extends State<AccountScreen> {
             const SizedBox(height: 24),
 
             // ─── Subscription Status ─────────────────────────────────────────
-            _SectionHeader('Status Langganan'),
-            _SubscriptionCard(vm: vm, isDark: isDark),
+            _SectionHeader(l10n.subscriptionStatus),
+            _SubscriptionCard(vm: vm, isDark: isDark, l10n: l10n),
             const SizedBox(height: 24),
 
             // ─── Backup & Restore ─────────────────────────────────────────────
-            _SectionHeader('Backup & Restore Cloud'),
+            _SectionHeader(l10n.cloudBackupRestore),
             if (vm.currentShopId.isEmpty)
-              const Card(
+              Card(
                 child: Padding(
                   padding: EdgeInsets.all(16),
-                  child: Text('Hubungkan ke Toko terlebih dahulu untuk menggunakan fitur Cloud Backup.'),
+                  child: Text(l10n.connectShopFirstForCloud),
                 ),
               )
             else
@@ -86,16 +93,16 @@ class _AccountScreenState extends State<AccountScreen> {
                   children: [
                     ListTile(
                       leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.cloud_upload, color: Colors.white)),
-                      title: const Text('Backup Data'),
-                      subtitle: const Text('Upload semua data lokal ke Cloud'),
-                      onTap: vm.isLoading ? null : () => _confirmAction(context, 'Backup Data', 'Upload data sekarang?', vm.backupData),
+                      title: Text(l10n.backupData),
+                      subtitle: Text(l10n.backupDataDesc),
+                      onTap: vm.isLoading ? null : () => _confirmAction(context, l10n.backupData, l10n.uploadDataNow, vm.backupData, l10n),
                     ),
                     const Divider(height: 1),
                     ListTile(
                       leading: const CircleAvatar(backgroundColor: Colors.orange, child: Icon(Icons.cloud_download, color: Colors.white)),
-                      title: const Text('Restore Data'),
-                      subtitle: const Text('Download dan timpa data lokal dari Cloud'),
-                      onTap: vm.isLoading ? null : () => _confirmAction(context, 'Restore Data', 'Data lokal akan ditimpa! Lanjutkan?', vm.restoreData),
+                      title: Text(l10n.restoreData),
+                      subtitle: Text(l10n.restoreDataDesc),
+                      onTap: vm.isLoading ? null : () => _confirmAction(context, l10n.restoreData, l10n.dataWillBeOverwrittenProceed, vm.restoreData, l10n),
                     ),
                   ],
                 ),
@@ -105,24 +112,24 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 24),
                
               // ─── Offline Backup ────────────────────────────────────────────
-              _SectionHeader('Backup & Restore Lokal'),
+              _SectionHeader(l10n.localBackupRestore),
               Card(
                 child: Column(
                   children: [
                     ListTile(
                       leading: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.folder_zip, color: Colors.white)),
-                      title: const Text('Backup Offline (ZIP)'),
-                      subtitle: const Text('Simpan database & foto ke file ZIP'),
+                      title: Text(l10n.offlineBackupZip),
+                      subtitle: Text(l10n.offlineBackupZipDesc),
                       onTap: vm.isLoading ? null : () => vm.backupOffline(),
                     ),
                     const Divider(height: 1),
                     ListTile(
                       leading: const CircleAvatar(backgroundColor: Colors.teal, child: Icon(Icons.file_open, color: Colors.white)),
-                      title: const Text('Restore Offline (ZIP)'),
-                      subtitle: const Text('Pulihkan data dari file ZIP'),
-                      onTap: vm.isLoading ? null : () => _confirmAction(context, 'Restore Offline', 'Data saat ini akan ditimpa! Lanjutkan?', () async {
+                      title: Text(l10n.offlineRestoreZip),
+                      subtitle: Text(l10n.offlineRestoreZipDesc),
+                      onTap: vm.isLoading ? null : () => _confirmAction(context, l10n.restoreOffline, l10n.dataWillBeOverwrittenProceed, () async {
                         await vm.restoreOffline();
-                      }),
+                      }, l10n),
                     ),
                   ],
                 ),
@@ -142,7 +149,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   // ─── Dialogs ───────────────────────────────────────────────────────────────
 
-  void _showConnectDialog(BuildContext context, GroomingViewModel vm) {
+  void _showConnectDialog(BuildContext context, GroomingViewModel vm, AppLocalizations l10n) {
     final shopIdController = TextEditingController();
     final secretKeyController = TextEditingController();
     bool isLoading = false;
@@ -154,19 +161,19 @@ class _AccountScreenState extends State<AccountScreen> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Hubungkan Toko'),
+          title: Text(l10n.connectShop),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: shopIdController,
-                decoration: const InputDecoration(labelText: 'Shop ID'),
+                decoration: InputDecoration(labelText: l10n.shopId),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: secretKeyController,
                 decoration: InputDecoration(
-                  labelText: 'Secret Key',
+                  labelText: l10n.secretKey,
                   suffixIcon: IconButton(
                     icon: Icon(isChecked ? Icons.visibility : Icons.visibility_off),
                     onPressed: () {
@@ -192,13 +199,13 @@ class _AccountScreenState extends State<AccountScreen> {
             TextButton(
               onPressed: isLoading ? null : () {
                 Navigator.pop(ctx);
-                _showCreateShopDialog(context, vm);
+                _showCreateShopDialog(context, vm, l10n);
               },
-              child: const Text('Buat Baru'),
+              child: Text(l10n.createNew),
             ),
             TextButton(
               onPressed: isLoading ? null : () => Navigator.pop(ctx),
-              child: const Text('Batal'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: isLoading ? null : () async {
@@ -212,15 +219,15 @@ class _AccountScreenState extends State<AccountScreen> {
                 );
                 if (success) {
                   Navigator.pop(ctx);
-                  _showRestorePrompt(context, vm);
+                  _showRestorePrompt(context, vm, l10n);
                 } else {
                   setState(() {
                     isLoading = false;
-                    error = 'ID atau Key salah, atau periksa koneksi internet.';
+                    error = l10n.invalidIdOrKey;
                   });
                 }
               },
-              child: const Text('Hubungkan'),
+              child: Text(l10n.connect),
             ),
           ],
         ),
@@ -228,7 +235,7 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  void _showCreateShopDialog(BuildContext context, GroomingViewModel vm) {
+  void _showCreateShopDialog(BuildContext context, GroomingViewModel vm, AppLocalizations l10n) {
     final nameController = TextEditingController(text: vm.businessName);
     final idController = TextEditingController(); // Added Manual ID
     bool isLoading = false;
@@ -238,22 +245,22 @@ class _AccountScreenState extends State<AccountScreen> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Buat Toko Baru'),
+          title: Text(l10n.createNewShop),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('ID dan Secret Key akan dibuat otomatis. Anda juga dapat menentukan ID sendiri (opsional). Data lokal saat ini akan di-upload ke cloud.'),
+              Text(l10n.createNewShopDesc),
               const SizedBox(height: 16),
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nama Toko'),
+                decoration: InputDecoration(labelText: l10n.shopName),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: idController,
-                decoration: const InputDecoration(
-                  labelText: 'Custom Shop ID (Opsional)',
-                  hintText: 'Misal: JENICATHOUSE',
+                decoration: InputDecoration(
+                  labelText: l10n.customShopIdOptional,
+                  hintText: l10n.customShopIdHint,
                 ),
               ),
               if (isLoading) ...[
@@ -265,7 +272,7 @@ class _AccountScreenState extends State<AccountScreen> {
           actions: [
             TextButton(
               onPressed: isLoading ? null : () => Navigator.pop(ctx),
-              child: const Text('Batal'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: isLoading ? null : () async {
@@ -279,17 +286,21 @@ class _AccountScreenState extends State<AccountScreen> {
                 
                 if (success) {
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                     SnackBar(content: Text('Toko berhasil dibuat! ID: ${vm.currentShopId}')),
-                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                       SnackBar(content: Text(l10n.shopCreatedSuccess(vm.currentShopId))),
+                    );
+                  }
                 } else {
                    setState(() => isLoading = false);
-                   ScaffoldMessenger.of(context).showSnackBar(
-                     const SnackBar(content: Text('Gagal membuat toko. Periksa koneksi.')),
-                   );
+                   if (context.mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                       SnackBar(content: Text(l10n.shopCreatedFail)),
+                     );
+                   }
                 }
               },
-              child: const Text('Buat & Upload'),
+              child: Text(l10n.createAndUpload),
             ),
           ],
         ),
@@ -297,16 +308,16 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  void _showRestorePrompt(BuildContext context, GroomingViewModel vm) {
+  void _showRestorePrompt(BuildContext context, GroomingViewModel vm, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Restore Data?'),
-        content: const Text('Berhasil terhubung. Apakah Anda ingin download & restore data dari cloud sekarang?'),
+        title: Text(l10n.restoreDataPrompt),
+        content: Text(l10n.restoreDataPromptDesc),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx), 
-            child: const Text('Nanti Saja'),
+            child: Text(l10n.later),
           ),
           FilledButton(
             onPressed: () async {
@@ -315,59 +326,159 @@ class _AccountScreenState extends State<AccountScreen> {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(success
-                      ? 'Restore berhasil! Data sedang diperbarui.'
-                      : 'Restore gagal! Periksa koneksi atau Secret Key Anda.'),
+                    content: Text(success ? l10n.restoreSuccess : l10n.restoreFail),
                     backgroundColor: success ? Colors.green : Colors.red,
                   ),
                 );
               }
             },
-            child: const Text('Ya, Restore'),
+            child: Text(l10n.yesRestore),
           ),
         ],
       ),
     );
   }
 
-  void _showDisconnectDialog(BuildContext context, GroomingViewModel vm) {
+  void _showDisconnectDialog(BuildContext context, GroomingViewModel vm, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Putuskan Koneksi?'),
-        content: const Text('Fitur sinkronisasi dan backup cloud akan dinonaktifkan. Data lokal tetap aman.'),
+        title: Text(l10n.disconnectShopPrompt),
+        content: Text(l10n.disconnectShopDesc),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () async {
               await vm.disconnectShop();
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Koneksi toko diputuskan')),
-              );
+              if (context.mounted) Navigator.pop(ctx);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.shopConnectionDisconnected)),
+                );
+              }
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Putuskan'),
+            child: Text(l10n.disconnect),
           ),
         ],
       ),
     );
   }
 
-  void _confirmAction(BuildContext context, String title, String content, Future<void> Function() action) {
+  void _showChangePasswordDialog(BuildContext context, GroomingViewModel vm, AppLocalizations l10n) {
+    final oldPwdController = TextEditingController();
+    final newPwdController = TextEditingController();
+    final confirmPwdController = TextEditingController();
+    bool isLoading = false;
+    bool obscureOld = true;
+    bool obscureNew = true;
+    String? error;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(l10n.changePassword),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: oldPwdController,
+                obscureText: obscureOld,
+                decoration: InputDecoration(
+                  labelText: l10n.oldPassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(obscureOld ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () => setState(() => obscureOld = !obscureOld),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: newPwdController,
+                obscureText: obscureNew,
+                decoration: InputDecoration(
+                  labelText: l10n.newPassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () => setState(() => obscureNew = !obscureNew),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: confirmPwdController,
+                obscureText: obscureNew,
+                decoration: InputDecoration(labelText: l10n.confirmNewPassword),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 8),
+                Text(error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+              ],
+              if (isLoading) ...[
+                const SizedBox(height: 16),
+                const LinearProgressIndicator(),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () => Navigator.pop(ctx),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: isLoading ? null : () async {
+                final oldPwd = oldPwdController.text;
+                final newPwd = newPwdController.text;
+                final confirmPwd = confirmPwdController.text;
+
+                if (newPwd.length < 6) {
+                  setState(() => error = l10n.passwordMinLength);
+                  return;
+                }
+                if (newPwd != confirmPwd) {
+                  setState(() => error = l10n.passwordMismatch);
+                  return;
+                }
+
+                setState(() { isLoading = true; error = null; });
+                final result = await vm.changePassword(oldPwd, newPwd);
+                if (!context.mounted) return;
+
+                if (result == 'success') {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.passwordChanged), backgroundColor: Colors.green),
+                  );
+                } else if (result == 'wrong_old') {
+                  setState(() { isLoading = false; error = l10n.wrongOldPassword; });
+                } else {
+                  setState(() { isLoading = false; error = l10n.passwordChangeFailed; });
+                }
+              },
+              child: Text(l10n.save),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmAction(BuildContext context, String title, String content, Future<void> Function() action, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(title),
         content: Text(content),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
               action();
             },
-            child: const Text('Ya, Lanjutkan'),
+            child: Text(l10n.yesProceed),
           ),
         ],
       ),
@@ -394,25 +505,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _SecretKeyTile extends StatelessWidget {
-  final String secretKey;
-  const _SecretKeyTile({required this.secretKey});
-
-  @override
-  Widget build(BuildContext context) {
-    return const ListTile(
-      leading: Icon(Icons.vpn_key, color: Colors.orange),
-      title: Text('Secret Key'),
-      subtitle: Text(
-        '•••••••• (Tersembunyi demi keamanan)',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUBSCRIPTION CARD
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -420,8 +512,9 @@ class _SecretKeyTile extends StatelessWidget {
 class _SubscriptionCard extends StatelessWidget {
   final GroomingViewModel vm;
   final bool isDark;
+  final AppLocalizations l10n;
 
-  const _SubscriptionCard({required this.vm, required this.isDark});
+  const _SubscriptionCard({required this.vm, required this.isDark, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -444,8 +537,8 @@ class _SubscriptionCard extends StatelessWidget {
                     color: planColor,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
-                    plan.isEmpty ? 'FREE' : plan,
+                    child: Text(
+                      plan.isEmpty ? l10n.planFree : plan,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -457,17 +550,17 @@ class _SubscriptionCard extends StatelessWidget {
                 TextButton.icon(
                   onPressed: () async {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Mengecek status...')),
+                      SnackBar(content: Text(l10n.checkingStatus)),
                     );
                     await vm.refreshSubscription();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Status: ${vm.userPlan.toUpperCase()}')),
+                        SnackBar(content: Text(l10n.statusValue(vm.userPlan.toUpperCase()))),
                       );
                     }
                   },
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Cek Status'),
+                  label: Text(l10n.checkStatus),
                 ),
               ],
             ),
@@ -475,15 +568,15 @@ class _SubscriptionCard extends StatelessWidget {
 
             // Valid until (PRO only)
             if (isPro && vm.validUntil > 0)
-              _InfoRow(Icons.event, 'Berlaku Sampai: ${app_date.formatDate(vm.validUntil)}'),
+              _InfoRow(Icons.event, l10n.validUntilValue(app_date.formatDate(vm.validUntil))),
 
             // Device limit
-            _InfoRow(Icons.devices, 'Limit Perangkat: ${vm.maxDevices}'),
+            _InfoRow(Icons.devices, l10n.deviceLimitValue(vm.maxDevices)),
             const SizedBox(height: 4),
 
             // Device ID
             if (vm.deviceId.isNotEmpty)
-              _InfoRow(Icons.smartphone, 'Device ID: ${vm.deviceId.length > 8 ? '${vm.deviceId.substring(0, 8)}...' : vm.deviceId}'),
+              _InfoRow(Icons.smartphone, l10n.deviceIdValue(vm.deviceId.length > 8 ? '${vm.deviceId.substring(0, 8)}...' : vm.deviceId)),
 
             // Upgrade button (starter only)
             if (!isPro) ...[
@@ -494,11 +587,11 @@ class _SubscriptionCard extends StatelessWidget {
                   onPressed: () {
                     WhatsAppUtils.openWhatsApp(
                       '082137895794',
-                      'Halo Admin, saya ingin upgrade aplikasi DataGrooming saya ke PRO. ID Toko: ${vm.currentShopId}',
+                      l10n.upgradeToProWhatsapp(vm.currentShopId),
                     );
                   },
                   icon: const Icon(Icons.star, size: 18),
-                  label: const Text('Tingkatkan ke PRO', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: Text(l10n.upgradeToPro, style: const TextStyle(fontWeight: FontWeight.bold)),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFFFC107),
                     foregroundColor: Colors.black,

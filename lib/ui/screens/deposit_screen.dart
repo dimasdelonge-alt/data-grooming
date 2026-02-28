@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../financial_view_model.dart';
 import '../grooming_view_model.dart';
@@ -21,6 +22,7 @@ class _DepositScreenState extends State<DepositScreen> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<FinancialViewModel>();
+    final l10n = AppLocalizations.of(context)!;
     final allDeposits = vm.deposits;
     final query = _search.trim().toLowerCase();
 
@@ -31,10 +33,10 @@ class _DepositScreenState extends State<DepositScreen> {
             d.ownerPhone.contains(query)).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Deposit Pelanggan')),
+      appBar: AppBar(title: Text(l10n.customerDeposit)),
       floatingActionButton: FilledButton.icon(
-        onPressed: () => _showTopUpDialog(context, vm),
-        label: const Text('Top Up'),
+        onPressed: () => _showTopUpDialog(context, vm, l10n),
+        label: Text(l10n.topUp),
         icon: const Icon(Icons.add_card_rounded),
         style: FilledButton.styleFrom(
           backgroundColor: Colors.green,
@@ -50,7 +52,7 @@ class _DepositScreenState extends State<DepositScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Cari Nama / No HP',
+                hintText: l10n.searchNamePhone,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -61,7 +63,7 @@ class _DepositScreenState extends State<DepositScreen> {
           // Deposit list
           Expanded(
             child: deposits.isEmpty
-                ? const Center(child: Text('Belum ada data deposit.', style: TextStyle(color: Colors.grey)))
+                ? Center(child: Text(l10n.noDepositData, style: const TextStyle(color: Colors.grey)))
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                     itemCount: deposits.length,
@@ -75,7 +77,7 @@ class _DepositScreenState extends State<DepositScreen> {
                             foregroundColor: Colors.white,
                             child: Text(deposit.ownerName.isNotEmpty ? deposit.ownerName[0].toUpperCase() : '?'),
                           ),
-                          title: Text(deposit.ownerName.isNotEmpty ? deposit.ownerName : 'No Name',
+                          title: Text(deposit.ownerName.isNotEmpty ? deposit.ownerName : l10n.noName,
                               style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(deposit.ownerPhone),
                           trailing: Text(
@@ -99,7 +101,7 @@ class _DepositScreenState extends State<DepositScreen> {
 
   // ─── TOP UP DIALOG ─────────────────────────────────────────────────
 
-  void _showTopUpDialog(BuildContext context, FinancialViewModel vm, {String? prefillPhone, String? prefillName}) {
+  void _showTopUpDialog(BuildContext context, FinancialViewModel vm, AppLocalizations l10n, {String? prefillPhone, String? prefillName}) {
     final phoneController = TextEditingController(text: prefillPhone ?? '');
     final nameController = TextEditingController(text: prefillName ?? '');
     final amountController = TextEditingController();
@@ -109,7 +111,7 @@ class _DepositScreenState extends State<DepositScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isExisting ? 'Top Up Saldo' : 'Deposit Baru'),
+        title: Text(isExisting ? l10n.topUpBalance : l10n.newDeposit),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -117,26 +119,26 @@ class _DepositScreenState extends State<DepositScreen> {
               if (!isExisting) ...[
                 TextField(
                   controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'No. HP (ID)'),
+                  decoration: InputDecoration(labelText: l10n.phoneId),
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Nama Pemilik'),
+                  decoration: InputDecoration(labelText: l10n.ownerName),
                 ),
                 const SizedBox(height: 12),
               ],
               TextField(
                 controller: amountController,
-                decoration: const InputDecoration(labelText: 'Jumlah Top Up', prefixText: 'Rp '),
+                decoration: InputDecoration(labelText: l10n.topUpAmount, prefixText: 'Rp '),
                 keyboardType: TextInputType.number,
                 inputFormatters: [CurrencyInputFormatter()],
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: notesController,
-                decoration: const InputDecoration(labelText: 'Catatan (Opsional)'),
+                decoration: InputDecoration(labelText: l10n.notesOptional),
               ),
             ],
           ),
@@ -166,7 +168,7 @@ class _DepositScreenState extends State<DepositScreen> {
   void _showDetailDialog(BuildContext context, FinancialViewModel vm, OwnerDeposit deposit) {
     showDialog(
       context: context,
-      builder: (ctx) => _DepositDetailDialog(vm: vm, deposit: deposit, parentContext: context),
+      builder: (ctx) => _DepositDetailDialog(vm: vm, deposit: deposit, parentContext: context, l10n: AppLocalizations.of(context)!),
     );
   }
 }
@@ -177,7 +179,8 @@ class _DepositDetailDialog extends StatelessWidget {
   final OwnerDeposit deposit;
   final BuildContext parentContext;
 
-  const _DepositDetailDialog({required this.vm, required this.deposit, required this.parentContext});
+  final AppLocalizations l10n;
+  const _DepositDetailDialog({required this.vm, required this.deposit, required this.parentContext, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +193,7 @@ class _DepositDetailDialog extends StatelessWidget {
         children: [
           const Icon(Icons.history),
           const SizedBox(width: 8),
-          Expanded(child: Text('Riwayat: ${freshDeposit.ownerName}', overflow: TextOverflow.ellipsis)),
+          Expanded(child: Text(l10n.historyPrefix(freshDeposit.ownerName), overflow: TextOverflow.ellipsis)),
         ],
       ),
       content: SizedBox(
@@ -200,9 +203,9 @@ class _DepositDetailDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Current balance
-            Text('Saldo Saat Ini: ${app_date.formatCurrencyDouble(freshDeposit.balance)}',
+            Text(l10n.currentBalanceValue(app_date.formatCurrencyDouble(freshDeposit.balance)),
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
-            Text('HP: ${freshDeposit.ownerPhone}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(l10n.ownerPhoneValue(freshDeposit.ownerPhone), style: const TextStyle(color: Colors.grey, fontSize: 12)),
             const SizedBox(height: 8),
 
             // Share history button
@@ -221,7 +224,7 @@ class _DepositDetailDialog extends StatelessWidget {
                 });
               },
               icon: const Icon(Icons.share, size: 16),
-              label: const Text('Bagikan Riwayat (Rekening Koran)', style: TextStyle(fontSize: 12)),
+              label: Text(l10n.shareHistoryStatement, style: const TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 36)),
             ),
             const SizedBox(height: 8),
@@ -234,9 +237,9 @@ class _DepositDetailDialog extends StatelessWidget {
                 builder: (ctx, snapshot) {
                   final transactions = snapshot.data ?? [];
                   if (transactions.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: Text('Belum ada transaksi.')),
+                    return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Center(child: Text(l10n.noTransactions)),
                     );
                   }
                   return ListView.separated(
@@ -254,7 +257,7 @@ class _DepositDetailDialog extends StatelessWidget {
                           color: isCredit ? Colors.green : Colors.red,
                           size: 20,
                         ),
-                        title: Text(_transactionLabel(txn.type), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        title: Text(_transactionLabel(txn.type, l10n), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -304,16 +307,16 @@ class _DepositDetailDialog extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => _showAdjustDialog(context, vm, freshDeposit),
-                    child: const Text('Adjust Saldo', style: TextStyle(fontSize: 12)),
+                    onPressed: () => _showAdjustDialog(context, vm, freshDeposit, l10n),
+                    child: Text(l10n.adjustBalance, style: const TextStyle(fontSize: 12)),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => _showDeleteConfirm(context, vm, freshDeposit),
+                    onPressed: () => _showDeleteConfirm(context, vm, freshDeposit, l10n),
                     style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-                    child: const Text('Hapus', style: TextStyle(fontSize: 12)),
+                    child: Text(l10n.delete, style: const TextStyle(fontSize: 12)),
                   ),
                 ),
               ],
@@ -321,8 +324,8 @@ class _DepositDetailDialog extends StatelessWidget {
           ],
         ),
       ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup')),
+  actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.close)),
         FilledButton(
           onPressed: () {
             Navigator.pop(context);
@@ -330,57 +333,58 @@ class _DepositDetailDialog extends StatelessWidget {
             state?._showTopUpDialog(
               parentContext,
               vm,
+              l10n,
               prefillPhone: freshDeposit.ownerPhone,
               prefillName: freshDeposit.ownerName,
             );
           },
           style: FilledButton.styleFrom(backgroundColor: Colors.green),
-          child: const Text('Top Up Lagi'),
+          child: Text(l10n.topUpAgain),
         ),
       ],
     );
   }
 
-  String _transactionLabel(TransactionType type) {
+  String _transactionLabel(TransactionType type, AppLocalizations l10n) {
     switch (type) {
-      case TransactionType.topup: return 'Top Up';
-      case TransactionType.groomingPayment: return 'Bayar Grooming';
-      case TransactionType.hotelPayment: return 'Bayar Hotel';
-      case TransactionType.adjustment: return 'Penyesuaian';
-      case TransactionType.refund: return 'Refund';
+      case TransactionType.topup: return l10n.transTopUp;
+      case TransactionType.groomingPayment: return l10n.transGroomingPayment;
+      case TransactionType.hotelPayment: return l10n.transHotelPayment;
+      case TransactionType.adjustment: return l10n.transAdjustment;
+      case TransactionType.refund: return l10n.transRefund;
     }
   }
 
-  void _showAdjustDialog(BuildContext dialogContext, FinancialViewModel vm, OwnerDeposit deposit) {
+  void _showAdjustDialog(BuildContext dialogContext, FinancialViewModel vm, OwnerDeposit deposit, AppLocalizations l10n) {
     final amountController = TextEditingController(text: deposit.balance.toInt().toString());
     final notesController = TextEditingController();
 
     showDialog(
       context: dialogContext,
       builder: (ctx) => AlertDialog(
-        title: const Text('Adjust Saldo'),
+        title: Text(l10n.adjustBalance),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Saldo saat ini: ${app_date.formatCurrencyDouble(deposit.balance)}',
+            Text(l10n.currentBalanceValue(app_date.formatCurrencyDouble(deposit.balance)),
                 style: const TextStyle(color: Colors.grey, fontSize: 13)),
             const SizedBox(height: 12),
             TextField(
               controller: amountController,
-              decoration: const InputDecoration(labelText: 'Saldo Baru', prefixText: 'Rp '),
+              decoration: InputDecoration(labelText: l10n.newBalance, prefixText: 'Rp '),
               keyboardType: TextInputType.number,
               inputFormatters: [CurrencyInputFormatter()],
             ),
             const SizedBox(height: 12),
             TextField(
               controller: notesController,
-              decoration: const InputDecoration(labelText: 'Alasan (Opsional)'),
+              decoration: InputDecoration(labelText: l10n.adjustmentReason),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () async {
               final raw = amountController.text.replaceAll('.', '');
@@ -390,21 +394,21 @@ class _DepositDetailDialog extends StatelessWidget {
                 if (ctx.mounted) Navigator.pop(ctx);
               }
             },
-            child: const Text('Simpan'),
+            child: Text(l10n.save),
           ),
         ],
       ),
     );
   }
 
-  void _showDeleteConfirm(BuildContext dialogContext, FinancialViewModel vm, OwnerDeposit deposit) {
+  void _showDeleteConfirm(BuildContext dialogContext, FinancialViewModel vm, OwnerDeposit deposit, AppLocalizations l10n) {
     showDialog(
       context: dialogContext,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Deposit'),
-        content: Text('Hapus deposit ${deposit.ownerName}? Semua riwayat transaksi akan ikut terhapus. Data tidak bisa dikembalikan.'),
+        title: Text(l10n.deleteDeposit),
+        content: Text(l10n.deleteDepositConfirm(deposit.ownerName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () async {
               await vm.deleteDeposit(deposit.ownerPhone);
@@ -412,7 +416,7 @@ class _DepositDetailDialog extends StatelessWidget {
               if (dialogContext.mounted) Navigator.pop(dialogContext); // Close detail dialog
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Hapus'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

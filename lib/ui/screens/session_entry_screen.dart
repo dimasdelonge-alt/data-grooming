@@ -13,6 +13,7 @@ import '../../util/currency_formatter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../util/whatsapp_utils.dart';
 import '../../util/phone_number_utils.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 /// Grooming session entry screen.
 ///
@@ -89,8 +90,9 @@ class _CheckInViewState extends State<_CheckInView> {
     );
 
     context.read<GroomingViewModel>().addSession(session, []);
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sesi dimulai! Masuk antrian.')),
+      SnackBar(content: Text(l10n.sessionStarted)),
     );
     _searchController.clear();
     setState(() {
@@ -101,6 +103,7 @@ class _CheckInViewState extends State<_CheckInView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final vm = context.watch<GroomingViewModel>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cats = vm.allCats;
@@ -116,7 +119,7 @@ class _CheckInViewState extends State<_CheckInView> {
     final displayCats = (query.isEmpty && _showDropdown) ? cats : filtered;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Grooming Check-In')),
+      appBar: AppBar(title: Text(l10n.groomingCheckIn)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -129,7 +132,7 @@ class _CheckInViewState extends State<_CheckInView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Mulai Sesi Baru',
+                    l10n.startNewSession,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -147,7 +150,7 @@ class _CheckInViewState extends State<_CheckInView> {
                           }),
                           onTap: () => setState(() => _showDropdown = true),
                           decoration: InputDecoration(
-                            hintText: 'Cari Kucing / Owner',
+                            hintText: l10n.searchCatOrOwner,
                             prefixIcon: const Icon(Icons.search_rounded),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
@@ -168,7 +171,7 @@ class _CheckInViewState extends State<_CheckInView> {
                       IconButton.filledTonal(
                         onPressed: () => Navigator.pushNamed(context, '/cat_entry'),
                         icon: const Icon(Icons.add_rounded),
-                        tooltip: 'Tambah Kucing Baru',
+                        tooltip: l10n.addNewCat,
                       ),
                     ],
                   ),
@@ -200,7 +203,7 @@ class _CheckInViewState extends State<_CheckInView> {
                                 dense: true,
                                 leading: CatAvatar(imagePath: cat.imagePath, size: 36),
                                 title: Text(cat.catName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text('Owner: ${cat.ownerName}'),
+                                subtitle: Text(l10n.ownerLabel(cat.ownerName)),
                                 onTap: () {
                                   setState(() {
                                     _selectedCatId = cat.catId;
@@ -221,7 +224,7 @@ class _CheckInViewState extends State<_CheckInView> {
                   FilledButton.icon(
                     onPressed: _selectedCatId != null ? _checkIn : null,
                     icon: const Icon(Icons.play_arrow_rounded),
-                    label: const Text('Check In (Mulai Antrian)'),
+                    label: Text(l10n.checkInStartQueue),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                     ),
@@ -235,7 +238,7 @@ class _CheckInViewState extends State<_CheckInView> {
 
           // ─── Active Queue ─────────────────────────────────
           Text(
-            'Antrian Saat Ini (${vm.activeSessions.length})',
+            l10n.currentQueue(vm.activeSessions.length),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
@@ -244,7 +247,7 @@ class _CheckInViewState extends State<_CheckInView> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Tidak ada antrian aktif.',
+                l10n.noActiveQueue,
                 style: TextStyle(color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext),
               ),
             )
@@ -255,6 +258,7 @@ class _CheckInViewState extends State<_CheckInView> {
                 session: session,
                 cat: cat,
                 isDark: isDark,
+                l10n: l10n,
                 onEdit: () {
                   Navigator.pushNamed(context, '/session_entry', arguments: session.sessionId);
                 },
@@ -275,12 +279,14 @@ class _ActiveSessionCard extends StatelessWidget {
   final Cat? cat;
   final bool isDark;
   final VoidCallback onEdit;
+  final AppLocalizations l10n;
 
   const _ActiveSessionCard({
     required this.session,
     this.cat,
     required this.isDark,
     required this.onEdit,
+    required this.l10n,
   });
 
   Color _statusBgColor() {
@@ -315,7 +321,7 @@ class _ActiveSessionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      cat?.catName ?? 'Unknown Cat',
+                      cat?.catName ?? l10n.unknownCat,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     Text(
@@ -339,11 +345,11 @@ class _ActiveSessionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SelectableText(
-                        'Token: ${session.trackingToken ?? "-"}',
+                        '${l10n.token}: ${session.trackingToken ?? "-"}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
                       ),
                       Text(
-                        'Jam: ${app_date.formatDateTime(session.timestamp)}',
+                        app_date.formatDateTime(session.timestamp),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -366,26 +372,26 @@ class _ActiveSessionCard extends StatelessWidget {
                         if (shopId.isEmpty) {
                           Navigator.pushNamed(context, '/settings');
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Silakan atur Shop ID di Settings')),
+                            SnackBar(content: Text(l10n.setShopIdInSettings)),
                           );
                           return;
                         }
                         final token = session.trackingToken;
                         if (token == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Error: Token tracking belum tersedia')),
+                            SnackBar(content: Text(l10n.trackingTokenNotAvailable)),
                           );
                           return;
                         }
                         final link = 'https://smartgroomer.my.id/tracking.html?shop=$shopId&token=$token';
                         // #2: Personal template message like V2
                         final ownerName = cat!.ownerName.split(' ').first;
-                        final message = 'Hai kak $ownerName 👋\n\nUntuk memantau proses grooming ${cat!.catName} sampai di tahap mana, bisa langsung dicek di link berikut ya:\n$link\n\nTerima kasih sudah mempercayakan kami! 🐱✨';
+                        final message = l10n.whatsappTrackingMessage(ownerName, cat!.catName, link);
                         
                         WhatsAppUtils.openWhatsApp(cat!.ownerPhone, message);
                       },
                       icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-                      label: const Text('WhatsApp'),
+                      label: Text(l10n.whatsapp),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF25D366),
                         foregroundColor: Colors.white,
@@ -401,14 +407,14 @@ class _ActiveSessionCard extends StatelessWidget {
                       if (shopId.isEmpty) {
                         Navigator.pushNamed(context, '/settings');
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Silakan atur Shop ID di Settings')),
+                          SnackBar(content: Text(l10n.setShopIdInSettings)),
                         );
                         return;
                       }
                       final token = session.trackingToken;
                       if (token == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Error: Token tracking belum tersedia')),
+                          SnackBar(content: Text(l10n.trackingTokenNotAvailable)),
                         );
                         return;
                       }
@@ -416,7 +422,7 @@ class _ActiveSessionCard extends StatelessWidget {
                       Share.share(link);
                     },
                     icon: const Icon(Icons.share_rounded, size: 16),
-                    label: const Text('Share Link'),
+                    label: Text(l10n.shareLink),
                     style: FilledButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.secondary,
                     ),
@@ -480,6 +486,8 @@ class _EditSessionViewState extends State<_EditSessionView> {
           .where((s) => session.treatment.contains(s.serviceName))
           .map((s) => s.id)
           .toSet();
+
+      if (!mounted) return;
 
       // #5: Load deposit for this owner
       OwnerDeposit? deposit;
@@ -561,19 +569,19 @@ class _EditSessionViewState extends State<_EditSessionView> {
     if (mounted) Navigator.pop(context);
   }
 
-  Future<void> _delete() async {
+  Future<void> _delete(AppLocalizations l10n) async {
     final vm = context.read<GroomingViewModel>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Sesi'),
-        content: const Text('Yakin hapus? Data tidak bisa dikembalikan.'),
+        title: Text(l10n.deleteSession),
+        content: Text(l10n.deleteSessionConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Hapus'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -587,19 +595,20 @@ class _EditSessionViewState extends State<_EditSessionView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final vm = context.watch<GroomingViewModel>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Edit Session')),
+        appBar: AppBar(title: Text(l10n.editSession)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     if (_session == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Edit Session')),
-        body: const Center(child: Text('Session tidak ditemukan.')),
+        appBar: AppBar(title: Text(l10n.editSession)),
+        body: Center(child: Text(l10n.sessionNotFound)),
       );
     }
 
@@ -611,10 +620,10 @@ class _EditSessionViewState extends State<_EditSessionView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Session'),
+        title: Text(l10n.editSession),
         actions: [
           IconButton(
-            onPressed: _delete,
+            onPressed: () => _delete(l10n),
             icon: const Icon(Icons.delete_rounded),
             color: Colors.redAccent,
           ),
@@ -641,7 +650,7 @@ class _EditSessionViewState extends State<_EditSessionView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Status', style: Theme.of(context).textTheme.titleMedium),
+                    Text(l10n.status, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -662,7 +671,7 @@ class _EditSessionViewState extends State<_EditSessionView> {
             const SizedBox(height: 16),
 
             // ─── Findings Chips ────────────────────────────
-            Text('Findings', style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.findings, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -690,7 +699,7 @@ class _EditSessionViewState extends State<_EditSessionView> {
                 }),
                 ActionChip(
                   avatar: const Icon(Icons.add, size: 16),
-                  label: const Text('Add'),
+                  label: Text(l10n.add),
                   onPressed: () => _showAddOptionDialog('finding'),
                 ),
               ],
@@ -699,7 +708,7 @@ class _EditSessionViewState extends State<_EditSessionView> {
             const Divider(height: 24),
 
             // ─── Treatment Chips ───────────────────────────
-            Text('Treatments', style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.treatments, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -728,9 +737,9 @@ class _EditSessionViewState extends State<_EditSessionView> {
             // ─── Notes ─────────────────────────────────────
             TextField(
               controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes',
-                prefixIcon: Icon(Icons.notes_rounded),
+              decoration: InputDecoration(
+                labelText: l10n.notes,
+                prefixIcon: const Icon(Icons.notes_rounded),
               ),
               maxLines: 3,
             ),
@@ -742,8 +751,8 @@ class _EditSessionViewState extends State<_EditSessionView> {
             // #7: ThousandsSeparator format on cost field
             TextField(
               controller: _costController,
-              decoration: const InputDecoration(
-                labelText: 'Total Cost',
+              decoration: InputDecoration(
+                labelText: l10n.totalCost,
                 prefixText: 'Rp ',
               ),
               keyboardType: TextInputType.number,
@@ -781,9 +790,9 @@ class _EditSessionViewState extends State<_EditSessionView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Bayar dari Deposit', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(l10n.payFromDeposit, style: const TextStyle(fontWeight: FontWeight.bold)),
                           Text(
-                            'Saldo: ${app_date.formatCurrencyDouble(_ownerDeposit!.balance)}',
+                            l10n.balanceStr(app_date.formatCurrencyDouble(_ownerDeposit!.balance)),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -794,7 +803,7 @@ class _EditSessionViewState extends State<_EditSessionView> {
                           ),
                           if (_ownerDeposit!.balance < costValue.toDouble() && _ownerDeposit!.balance > 0)
                             Text(
-                              'Saldo kurang, akan dipotong ${app_date.formatCurrencyDouble(_ownerDeposit!.balance)}',
+                              l10n.balanceNotEnoughDeduct(app_date.formatCurrencyDouble(_ownerDeposit!.balance)),
                               style: const TextStyle(fontSize: 11, color: Colors.orange),
                             ),
                         ],

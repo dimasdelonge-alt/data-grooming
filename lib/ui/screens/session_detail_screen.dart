@@ -8,6 +8,7 @@ import '../../data/entity/cat.dart';
 import '../../data/entity/session.dart';
 import '../../util/date_utils.dart' as app_date;
 import '../../util/pdf_generator.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 /// Read-only session detail screen.
 class SessionDetailScreen extends StatefulWidget {
@@ -45,18 +46,19 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Session Detail')),
+        appBar: AppBar(title: Text(l10n.sessionDetail)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     if (_session == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Session Detail')),
-        body: const Center(child: Text('Session not found.')),
+        appBar: AppBar(title: Text(l10n.sessionDetail)),
+        body: Center(child: Text(l10n.sessionNotFound)),
       );
     }
 
@@ -64,12 +66,12 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Session Detail'),
+        title: Text(l10n.sessionDetail),
         actions: [
           IconButton(
-            onPressed: () => _printInvoice(context, session),
+            onPressed: () => _printInvoice(context, session, l10n),
             icon: const Icon(Icons.print_rounded),
-            tooltip: 'Cetak Invoice',
+            tooltip: l10n.printInvoice,
           ),
           IconButton(
             onPressed: () => Navigator.pushNamed(context, '/session_entry', arguments: session.sessionId),
@@ -98,7 +100,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _cat?.catName ?? 'Unknown Cat',
+                        _cat?.catName ?? l10n.unknownCat,
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -126,7 +128,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total Biaya', style: TextStyle(fontSize: 15)),
+                  Text(l10n.totalCost, style: const TextStyle(fontSize: 15)),
                   Text(
                     app_date.formatCurrencyDouble(session.totalCost.toDouble()),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -142,14 +144,14 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
           const SizedBox(height: 16),
 
           // ─── Status ──────────────────────────────────────
-          _InfoRow(label: 'Status', value: session.status),
-          if (session.trackingToken != null) _InfoRow(label: 'Token', value: session.trackingToken!),
+          _InfoRow(label: l10n.status, value: _getStatusLabel(session.status, l10n)),
+          if (session.trackingToken != null) _InfoRow(label: l10n.token, value: session.trackingToken!),
 
           const Divider(height: 24),
 
           // ─── Treatments ──────────────────────────────────
           if (session.treatment.isNotEmpty) ...[
-            Text('Treatments', style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.treatments, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 6),
             Wrap(
               spacing: 8,
@@ -161,7 +163,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
 
           // ─── Findings ────────────────────────────────────
           if (session.findings.isNotEmpty) ...[
-            Text('Findings', style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.findings, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 6),
             Wrap(
               spacing: 8,
@@ -176,7 +178,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
 
           // ─── Notes ───────────────────────────────────────
           if (session.groomerNotes.isNotEmpty) ...[
-            Text('Catatan Groomer', style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.groomerNotes, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 6),
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -192,7 +194,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
   }
 
 
-  Future<void> _printInvoice(BuildContext context, Session session) async {
+  Future<void> _printInvoice(BuildContext context, Session session, AppLocalizations l10n) async {
     try {
       final vm = context.read<GroomingViewModel>();
       // Need bookings linked to this session? 
@@ -235,7 +237,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
       
       // Allow me to check `Booking` entity first.
       if (_cat == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data kucing tidak ditemukan')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.catDataNotFound)));
         return;
       }
 
@@ -260,8 +262,27 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
     } catch (e) {
       debugPrint('Error printing invoice: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal mencetak: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.printFailed(e.toString()))));
       }
+    }
+  }
+
+  String _getStatusLabel(String status, AppLocalizations l10n) {
+    switch (status) {
+      case 'WAITING':
+        return l10n.statusWaiting;
+      case 'BATHING':
+        return l10n.statusBathing;
+      case 'DRYING':
+        return l10n.statusDrying;
+      case 'FINISHING':
+        return l10n.statusFinishing;
+      case 'PICKUP_READY':
+        return l10n.statusPickupReady;
+      case 'DONE':
+        return l10n.statusDone;
+      default:
+        return status;
     }
   }
 }

@@ -4,6 +4,7 @@ import '../grooming_view_model.dart';
 import '../theme/theme.dart';
 import '../../data/entity/booking.dart';
 import '../../util/reminder_utils.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 import 'booking_screen.dart';
 
 /// Monthly calendar view with booking dots and day-detail section.
@@ -40,6 +41,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final vm = context.watch<GroomingViewModel>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bookings = vm.bookings;
@@ -58,7 +60,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final dayBookings = grouped[selKey] ?? [];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Jadwal Grooming')),
+      appBar: AppBar(title: Text(l10n.groomingSchedule)),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -70,7 +72,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 children: [
                   IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left_rounded)),
                   Text(
-                    '${_monthName(_currentMonth.month)} ${_currentMonth.year}',
+                    '${_monthName(_currentMonth.month, l10n)} ${_currentMonth.year}',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right_rounded)),
@@ -82,7 +84,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
-                children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                children: [l10n.shortMonday, l10n.shortTuesday, l10n.shortWednesday, l10n.shortThursday, l10n.shortFriday, l10n.shortSaturday, l10n.shortSunday]
                     .map((d) => Expanded(
                           child: Center(
                             child: Text(d, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isDark ? AppColors.accentBlue : AppColors.lightPrimaryDark)),
@@ -112,20 +114,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Booking pada ${_selectedDate.day} ${_monthName(_selectedDate.month)} ${_selectedDate.year}',
+                    l10n.bookingOn('${_selectedDate.day} ${_monthName(_selectedDate.month, l10n)} ${_selectedDate.year}'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   if (dayBookings.isEmpty)
-                    Text('Tidak ada jadwal.', style: TextStyle(color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext))
+                    Text(l10n.noSchedule, style: TextStyle(color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext))
                   else
                     ...dayBookings.map((b) {
                       final cat = cats.where((c) => c.catId == b.catId).firstOrNull;
                       return BookingCard(
                         booking: b,
-                        catName: cat?.catName ?? 'Unknown',
-                        ownerName: cat?.ownerName ?? 'Unknown',
+                        catName: cat?.catName ?? l10n.unknown,
+                        ownerName: cat?.ownerName ?? l10n.unknown,
                         isDark: isDark,
+                        l10n: l10n,
                         onCheckIn: () {
                           vm.updateBookingStatus(b, 'COMPLETED');
                           Navigator.pushNamed(context, '/session_entry', arguments: {'catId': b.catId});
@@ -135,8 +138,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             : null,
                         onConfirm: () => vm.updateBookingStatus(b, 'CONFIRMED'),
                         onCancel: () => vm.updateBookingStatus(b, 'CANCELLED'),
-                        onReschedule: () => _showRescheduleDialog(context, vm, b),
-                        onDelete: () => _showDeleteDialog(context, vm, b),
+                        onReschedule: () => _showRescheduleDialog(context, vm, b, l10n),
+                        onDelete: () => _showDeleteDialog(context, vm, b, l10n),
                       );
                     }),
                 ],
@@ -148,12 +151,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  String _monthName(int month) {
-    const names = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    return names[month];
+  String _monthName(int month, AppLocalizations l10n) {
+    switch (month) {
+      case 1: return l10n.monthJan;
+      case 2: return l10n.monthFeb;
+      case 3: return l10n.monthMar;
+      case 4: return l10n.monthApr;
+      case 5: return l10n.monthMay;
+      case 6: return l10n.monthJun;
+      case 7: return l10n.monthJul;
+      case 8: return l10n.monthAug;
+      case 9: return l10n.monthSep;
+      case 10: return l10n.monthOct;
+      case 11: return l10n.monthNov;
+      case 12: return l10n.monthDec;
+      default: return '';
+    }
   }
 
-  void _showRescheduleDialog(BuildContext _, GroomingViewModel vm, Booking booking) async {
+  void _showRescheduleDialog(BuildContext _, GroomingViewModel vm, Booking booking, AppLocalizations l10n) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.fromMillisecondsSinceEpoch(booking.bookingDate),
@@ -173,21 +189,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
     vm.rescheduleBooking(booking, newDate.millisecondsSinceEpoch);
   }
 
-  void _showDeleteDialog(BuildContext context, GroomingViewModel vm, Booking booking) {
+  void _showDeleteDialog(BuildContext context, GroomingViewModel vm, Booking booking, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Jadwal'),
-        content: const Text('Hapus jadwal ini secara permanen?'),
+        title: Text(l10n.deleteSchedule),
+        content: Text(l10n.deleteScheduleConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () {
               vm.deleteBooking(booking);
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Hapus'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

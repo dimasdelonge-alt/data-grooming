@@ -8,6 +8,7 @@ import '../common/cat_avatar.dart';
 import '../../data/entity/cat.dart';
 import '../../util/phone_number_utils.dart';
 import '../../util/image_utils.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 class CatEntryScreen extends StatefulWidget {
   final int? catId;
@@ -65,7 +66,7 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
     if (mounted) setState(() => _isLoading = false);
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(AppLocalizations l10n) async {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -75,16 +76,16 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
-                'Pilih Foto Profil',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                l10n.chooseProfilePhoto,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt_rounded),
-              title: const Text('Kamera'),
+              title: Text(l10n.camera),
               onTap: () {
                 Navigator.pop(ctx);
                 _executePickImage(ImageSource.camera);
@@ -92,7 +93,7 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Galeri'),
+              title: Text(l10n.gallery),
               onTap: () {
                 Navigator.pop(ctx);
                 _executePickImage(ImageSource.gallery);
@@ -130,7 +131,8 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
       if (bytes.isEmpty) {
         if (mounted) {
           setState(() => _isLoading = false);
-          _showDebugError('Gagal baca file: bytes kosong (0 bytes)');
+          final l10n = AppLocalizations.of(context)!;
+          _showDebugError(l10n.readImageFailed);
         }
         return;
       }
@@ -148,7 +150,8 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
       } catch (compressError) {
         debugPrint('[ImagePick] Compression error: $compressError');
         if (mounted) {
-          _showDebugError('Kompresi gagal: $compressError');
+          final l10n = AppLocalizations.of(context)!;
+          _showDebugError(l10n.compressionFailed(compressError.toString()));
         }
       }
 
@@ -160,7 +163,8 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
             debugPrint('[ImagePick] ✅ imagePath updated, length: ${base64Str.length}');
           } else {
             debugPrint('[ImagePick] ❌ base64Str is null or empty');
-            _showDebugError('Hasil kompresi kosong (null/empty)');
+            final l10n = AppLocalizations.of(context)!;
+            _showDebugError(l10n.compressionResultEmpty);
           }
           _isLoading = false;
         });
@@ -233,15 +237,16 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isEdit = widget.catId != null && widget.catId != 0;
     final vm = context.watch<GroomingViewModel>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit Kucing' : 'Tambah Kucing'),
+        title: Text(isEdit ? l10n.editCat : l10n.addCat),
         elevation: 0,
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _save,
-            child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(l10n.save, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -257,7 +262,7 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
                     // ─── Avatar ──────────────────────────────
                     Center(
                       child: GestureDetector(
-                        onTap: _pickImage,
+                        onTap: () => _pickImage(l10n),
                         child: Stack(
                           children: [
                             CatAvatar(imagePath: _imagePath, size: 100),
@@ -284,30 +289,31 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
                     const SizedBox(height: 24),
 
                     // ─── Cat Info Section ────────────────────
-                    _sectionTitle('Info Kucing', Icons.pets_rounded, isDark),
+                    _sectionTitle(l10n.catInfo, Icons.pets_rounded, isDark),
                     const SizedBox(height: 12),
-                    _buildTextField(_catNameCtrl, 'Nama Kucing', required: true),
+                    _buildTextField(_catNameCtrl, l10n.catNameLabel, l10n, required: true),
                     const SizedBox(height: 12),
-                    _buildTextField(_breedCtrl, 'Ras'),
+                    _buildTextField(_breedCtrl, l10n.breed, l10n),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(child: _buildTextField(_furColorCtrl, 'Warna Bulu')),
+                        Expanded(child: _buildTextField(_furColorCtrl, l10n.furColor, l10n)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildTextField(_eyeColorCtrl, 'Warna Mata')),
+                        Expanded(child: _buildTextField(_eyeColorCtrl, l10n.eyeColor, l10n)),
                       ],
                     ),
                     const SizedBox(height: 12),
                     _buildTextField(
                       _weightCtrl,
-                      'Berat Badan (kg)',
+                      l10n.weightKg,
+                      l10n,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))],
                     ),
 
                     const SizedBox(height: 16),
                     // ─── Gender ──────────────────────────────
-                    Text('Jenis Kelamin', style: TextStyle(
+                    Text(l10n.gender, style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
@@ -315,9 +321,9 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        _choiceChip('Male', Icons.male_rounded, isDark),
+                        _choiceChip('Male', l10n.male, Icons.male_rounded, isDark),
                         const SizedBox(width: 12),
-                        _choiceChip('Female', Icons.female_rounded, isDark),
+                        _choiceChip('Female', l10n.female, Icons.female_rounded, isDark),
                       ],
                     ),
 
@@ -326,9 +332,9 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
                     Card(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       child: SwitchListTile(
-                        title: const Text('Sudah Steril'),
+                        title: Text(l10n.isSterileYes),
                         subtitle: Text(
-                          _isSterile ? 'Ya, sudah steril' : 'Belum steril',
+                          _isSterile ? l10n.yesSterilized : l10n.notSterilizedYet,
                           style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext),
                         ),
                         value: _isSterile,
@@ -344,25 +350,27 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
 
                     const SizedBox(height: 24),
                     // ─── Owner Info Section ──────────────────
-                    _sectionTitle('Info Pemilik', Icons.person_rounded, isDark),
+                    _sectionTitle(l10n.ownerInfo, Icons.person_rounded, isDark),
                     const SizedBox(height: 12),
-                    _buildOwnerAutocomplete(vm, isDark),
+                    _buildOwnerAutocomplete(vm, isDark, l10n),
                     const SizedBox(height: 12),
                     _buildTextField(
                       _ownerPhoneCtrl,
-                      'No. Telepon Pemilik',
+                      l10n.ownerPhoneLabel,
+                      l10n,
                       keyboardType: TextInputType.phone,
                     ),
 
                     const SizedBox(height: 24),
                     // ─── Alert Section ───────────────────────
-                    _sectionTitle('Peringatan', Icons.warning_amber_rounded, isDark),
+                    _sectionTitle(l10n.warning, Icons.warning_amber_rounded, isDark),
                     const SizedBox(height: 12),
                     _buildTextField(
                       _alertCtrl,
-                      'Catatan Peringatan Permanen',
+                      l10n.permanentWarningNote,
+                      l10n,
                       maxLines: 2,
-                      hint: 'Contoh: Galak, Jantung Lemah',
+                      hint: l10n.warningNoteExample,
                     ),
 
                     const SizedBox(height: 32),
@@ -380,7 +388,7 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'LIMIT TERCAPAI (15 Ekor)',
+                              l10n.limitReached15,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
@@ -389,7 +397,7 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Anda menggunakan versi Gratis. Silakan upgrade ke PRO untuk menambah data tanpa batas.',
+                              l10n.freeVersionUpgradeToPro,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Theme.of(context).colorScheme.onErrorContainer,
@@ -405,7 +413,7 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
                           ? null
                           : _save,
                       icon: Icon(isEdit ? Icons.save_rounded : Icons.add_rounded),
-                      label: Text(isEdit ? 'Update Kucing' : 'Simpan Kucing'),
+                      label: Text(isEdit ? l10n.updateCat : l10n.saveCat),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -442,7 +450,8 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
 
   Widget _buildTextField(
     TextEditingController controller,
-    String label, {
+    String label,
+    AppLocalizations l10n, {
     bool required = false,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
@@ -466,11 +475,11 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
           inputFormatters: inputFormatters,
           maxLines: maxLines,
           validator: required
-              ? (v) => (v == null || v.trim().isEmpty) ? '$label wajib diisi' : null
+              ? (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired(label) : null
               : null,
           style: const TextStyle(fontWeight: FontWeight.w500),
           decoration: InputDecoration(
-            hintText: hint ?? 'Masukkan $label',
+            hintText: hint ?? l10n.enterField(label),
             hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.6)),
             filled: true,
             // fillColor: Theme.of(context).cardColor, // Optional: customize fill color
@@ -485,13 +494,13 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
     );
   }
 
-  Widget _buildOwnerAutocomplete(GroomingViewModel vm, bool isDark) {
+  Widget _buildOwnerAutocomplete(GroomingViewModel vm, bool isDark, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Nama Pemilik',
-          style: TextStyle(
+        Text(
+          l10n.ownerName,
+          style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -507,10 +516,10 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
               controller: textController,
               focusNode: focusNode,
               onChanged: (v) => _ownerNameCtrl.text = v,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama Pemilik wajib diisi' : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? l10n.ownerNameRequired : null,
               style: const TextStyle(fontWeight: FontWeight.w500),
               decoration: InputDecoration(
-                hintText: 'Cari atau masukkan nama pemilik',
+                hintText: l10n.searchOrEnterOwnerName,
                 hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.6)),
                 filled: true,
                 border: OutlineInputBorder(
@@ -562,7 +571,7 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
     );
   }
 
-  Widget _choiceChip(String value, IconData icon, bool isDark) {
+  Widget _choiceChip(String value, String displayValue, IconData icon, bool isDark) {
     final isSelected = _gender == value;
     final color = isDark ? AppColors.accentBlue : AppColors.lightPrimary;
 
@@ -586,7 +595,7 @@ class _CatEntryScreenState extends State<CatEntryScreen> {
               Icon(icon, size: 20, color: isSelected ? color : Colors.grey),
               const SizedBox(width: 8),
               Text(
-                value,
+                displayValue,
                 style: TextStyle(
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected ? color : Colors.grey,

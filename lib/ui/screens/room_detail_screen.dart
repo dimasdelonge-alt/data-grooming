@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../hotel_view_model.dart';
 import '../grooming_view_model.dart';
@@ -22,12 +23,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   Widget build(BuildContext context) {
     final hotelVm = context.watch<HotelViewModel>();
     final groomingVm = context.watch<GroomingViewModel>();
+    final l10n = AppLocalizations.of(context)!;
     final room = hotelVm.rooms.where((r) => r.id == widget.roomId).firstOrNull;
 
     if (room == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Detail Kamar')),
-        body: const Center(child: Text('Kamar tidak ditemukan.')),
+        appBar: AppBar(title: Text(l10n.roomDetail)),
+        body: Center(child: Text(l10n.roomNotFound)),
       );
     }
 
@@ -51,14 +53,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               child: ListTile(
                 leading: Icon(Icons.meeting_room_rounded, size: 40, color: Theme.of(context).primaryColor),
                 title: Text(room.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                subtitle: Text('Kapasitas: ${room.capacity} • ${app_date.formatCurrencyDouble(room.pricePerNight)} / malam\n${room.notes}'),
+                subtitle: Text('${l10n.capacityLabel(room.capacity)} • ${l10n.pricePerNightLabel(app_date.formatCurrencyDouble(room.pricePerNight))}\n${room.notes}'),
                 trailing: IconButton(
                   icon: const Icon(Icons.edit_rounded),
                   onPressed: () {
                      // Reuse the dialog from HotelScreen?
                      // Ideally refactor dialog to separate widget or static method.
                      // For now just show a simple edit dialog here or copy logic.
-                     _showEditRoomDialog(context, hotelVm, room);
+                     _showEditRoomDialog(context, hotelVm, room, l10n);
                   },
                 ),
               ),
@@ -67,7 +69,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
             // ─── Status Section ──────────────────────────────────────────────
             Text(
-              isOccupied ? 'Status: TERISI' : 'Status: KOSONG',
+              isOccupied ? l10n.statusOccupied : l10n.statusAvailable,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -90,22 +92,22 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           backgroundImage: cat?.imagePath != null ? AssetImage(cat!.imagePath!) : null, // Uses local path logic
                           child: cat?.imagePath == null ? const Icon(Icons.pets) : null,
                         ),
-                        title: Text(cat?.catName ?? 'Unknown Cat', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Owner: ${cat?.ownerName ?? "-"}'),
+                        title: Text(cat?.catName ?? l10n.unknown, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('${l10n.owner}: ${cat?.ownerName ?? "-"}'),
                       ),
                       const Divider(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _DateInfo('Check In', DateTime.fromMillisecondsSinceEpoch(activeBooking.checkInDate)),
-                          _DateInfo('Check Out', DateTime.fromMillisecondsSinceEpoch(activeBooking.checkOutDate)),
+                          _DateInfo(l10n.checkIn, DateTime.fromMillisecondsSinceEpoch(activeBooking.checkInDate)),
+                          _DateInfo(l10n.checkOut, DateTime.fromMillisecondsSinceEpoch(activeBooking.checkOutDate)),
                         ],
                       ),
                       const SizedBox(height: 16),
                       FilledButton.icon(
-                        onPressed: () => _checkOut(context, hotelVm, activeBooking),
+                        onPressed: () => _checkOut(context, hotelVm, activeBooking, l10n),
                         icon: const Icon(Icons.logout_rounded),
-                        label: const Text('Check Out'),
+                        label: Text(l10n.checkOutButton),
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.orange,
                           minimumSize: const Size.fromHeight(45),
@@ -126,8 +128,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     FilledButton.icon(
                       onPressed: () => _showCheckInDialog(context, hotelVm, groomingVm, room),
                       icon: const Icon(Icons.login_rounded),
-                      label: const Text('Check In (Masuk Kamar)'),
-                      style: FilledButton.styleFrom(
+                    label: Text(l10n.checkInRoom),
+                    style: FilledButton.styleFrom(
                         minimumSize: const Size(200, 50),
                       ),
                     ),
@@ -141,21 +143,21 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  void _showEditRoomDialog(BuildContext context, HotelViewModel vm, HotelRoom room) {
+  void _showEditRoomDialog(BuildContext context, HotelViewModel vm, HotelRoom room, AppLocalizations l10n) {
     // Simplified edit dialog
     final priceController = TextEditingController(text: room.pricePerNight.toInt().toString());
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Update Harga'),
+        title: Text(l10n.updatePrice),
         content: TextField(
           controller: priceController,
           keyboardType: TextInputType.number,
           inputFormatters: [CurrencyInputFormatter()],
-          decoration: const InputDecoration(labelText: 'Harga per Malam', prefixText: 'Rp '),
+          decoration: InputDecoration(labelText: l10n.pricePerNight, prefixText: 'Rp '),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () {
               final raw = priceController.text.replaceAll('.', '');
@@ -165,7 +167,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Simpan'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -197,9 +199,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
           // Get unique owner names for autocomplete
           final ownerNames = allCats.map((c) => c.ownerName).toSet().toList()..sort();
+          final l10n = AppLocalizations.of(context)!;
 
           return AlertDialog(
-            title: const Text('Hotel Check In'),
+            title: Text(l10n.hotelCheckIn),
             content: SizedBox(
               width: double.maxFinite,
               child: SingleChildScrollView(
@@ -210,7 +213,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     TextField(
                       controller: searchController,
                       decoration: InputDecoration(
-                        labelText: 'Cari Kucing / Owner',
+                        labelText: l10n.searchCatOrOwner,
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: searchController.text.isNotEmpty 
                           ? IconButton(
@@ -266,7 +269,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   dense: true,
                                   leading: CatAvatar(imagePath: cat.imagePath, size: 36),
                                   title: Text(cat.catName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  subtitle: Text('Owner: ${cat.ownerName}'),
+                                  subtitle: Text('${l10n.owner}: ${cat.ownerName}'),
                                   onTap: () {
                                     setDlgState(() {
                                       selectedCat = cat;
@@ -290,7 +293,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Text('Kucing belum terdaftar?', 
+                          child: Text(l10n.catNotRegistered, 
                             style: TextStyle(color: Colors.grey[600], fontSize: 12),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -298,7 +301,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         TextButton.icon(
                           onPressed: () => setDlgState(() => showQuickAdd = !showQuickAdd),
                           icon: Icon(showQuickAdd ? Icons.close : Icons.add_circle_outline),
-                          label: Text(showQuickAdd ? 'Batal Tambah' : 'Tambah Baru'),
+                          label: Text(showQuickAdd ? l10n.cancelAdd : l10n.addNew),
                           style: TextButton.styleFrom(
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
@@ -318,22 +321,22 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('Data Kucing Baru', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(l10n.newCatData, style: const TextStyle(fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             TextField(
                               controller: quickNameController,
-                              decoration: const InputDecoration(
-                                labelText: 'Nama Kucing',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                labelText: l10n.catNameLabel,
+                                border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
                             ),
                             const SizedBox(height: 8),
                             TextField(
                               controller: quickBreedController,
-                              decoration: const InputDecoration(
-                                labelText: 'Ras',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                labelText: l10n.breed,
+                                border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
                             ),
@@ -350,9 +353,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 return TextField(
                                   controller: controller,
                                   focusNode: focusNode,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Nama Owner',
-                                    border: OutlineInputBorder(),
+                                  decoration: InputDecoration(
+                                    labelText: l10n.ownerNameLabel,
+                                    border: const OutlineInputBorder(),
                                     isDense: true,
                                   ),
                                 );
@@ -362,9 +365,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             TextField(
                               controller: quickPhoneController,
                               keyboardType: TextInputType.phone,
-                              decoration: const InputDecoration(
-                                labelText: 'No. Telp Owner',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                labelText: l10n.ownerPhoneLabel,
+                                border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
                             ),
@@ -388,11 +391,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       quickPhoneController.clear();
                                     });
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Kucing berhasil ditambahkan!')),
+                                      SnackBar(content: Text(l10n.catAddedSuccess)),
                                     );
                                   }
                                 },
-                                child: const Text('Simpan Kucing'),
+                                child: Text(l10n.saveCat),
                               ),
                             ),
                           ],
@@ -413,7 +416,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       },
                       icon: const Icon(Icons.date_range),
                       label: Text(selectedRange == null 
-                          ? 'Pilih Tanggal' 
+                          ? l10n.selectDate 
                           : '${selectedRange!.start.day}/${selectedRange!.start.month} - ${selectedRange!.end.day}/${selectedRange!.end.month}'),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size.fromHeight(48),
@@ -423,7 +426,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
                     if (selectedCat != null && selectedRange != null) ...[
                        const SizedBox(height: 16),
-                       Text('Total Biaya: ${app_date.formatCurrencyDouble(room.pricePerNight * (selectedRange!.duration.inDays > 0 ? selectedRange!.duration.inDays : 1))}', 
+                       Text('${l10n.totalLabel}: ${app_date.formatCurrencyDouble(room.pricePerNight * (selectedRange!.duration.inDays > 0 ? selectedRange!.duration.inDays : 1))}', 
                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
                     ],
                   ],
@@ -431,7 +434,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
               FilledButton(
                 onPressed: (selectedCat != null && selectedRange != null)
                     ? () {
@@ -451,7 +454,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         Navigator.pop(ctx);
                       }
                     : null,
-                child: const Text('Check In'),
+                child: Text(l10n.checkIn),
               ),
             ],
           );
@@ -460,17 +463,17 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  Future<void> _checkOut(BuildContext context, HotelViewModel vm, HotelBooking booking) async {
+  Future<void> _checkOut(BuildContext context, HotelViewModel vm, HotelBooking booking, AppLocalizations l10n) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Konfirmasi Check Out'),
-        content: const Text('Selesaikan booking ini? Kamar akan menjadi kosong.'),
+        title: Text(l10n.confirmCheckOut),
+        content: Text(l10n.finishBookingConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Check Out'),
+            child: Text(l10n.checkOut),
           ),
         ],
       ),

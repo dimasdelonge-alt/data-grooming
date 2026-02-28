@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../financial_view_model.dart';
 import '../grooming_view_model.dart';
@@ -55,19 +56,19 @@ class _FinancialScreenState extends State<FinancialScreen> {
       if (_selectedKeys.contains(key)) {
         _selectedKeys.remove(key);
         if (_selectedKeys.isEmpty) {
-          _isSelecting = false;
           _lockedOwnerName = null;
         }
       } else {
         // Check same owner
         final owner = _getOwnerOfTxn(txn);
+        final l10n = AppLocalizations.of(context)!;
         if (_lockedOwnerName == null || _lockedOwnerName == owner) {
           _selectedKeys.add(key);
           _lockedOwnerName ??= owner;
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Hanya bisa memilih transaksi dari pemilik yang sama ($_lockedOwnerName)'),
+              content: Text(l10n.sameOwnerOnly(_lockedOwnerName!)),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -216,7 +217,8 @@ class _FinancialScreenState extends State<FinancialScreen> {
     } catch (e) {
       debugPrint('Error printing: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal mencetak: $e')));
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.printFailed(e.toString()))));
       }
     }
 
@@ -240,7 +242,8 @@ class _FinancialScreenState extends State<FinancialScreen> {
     } catch (e) {
       debugPrint('Error printing report: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal mencetak: $e')));
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.printFailed(e.toString()))));
       }
     }
   }
@@ -250,6 +253,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
     // Watch ViewModels
     final vm = context.watch<FinancialViewModel>();
     final groomingVm = context.watch<GroomingViewModel>();
+    final l10n = AppLocalizations.of(context)!;
     
     // Theme & State
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -264,7 +268,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
                   icon: const Icon(Icons.close_rounded),
                   onPressed: _cancelSelection,
                 ),
-                title: Text('${_selectedKeys.length} dipilih'),
+                title: Text(l10n.selectedCount(_selectedKeys.length)),
                 actions: [
                   _isPrinting
                       ? const Padding(
@@ -273,7 +277,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
                         )
                       : IconButton(
                           icon: const Icon(Icons.print_rounded),
-                          tooltip: 'Cetak Invoice Gabungan',
+                          tooltip: l10n.printCombinedInvoiceBtn,
                           onPressed: _selectedKeys.isNotEmpty
                               ? () => _printSelected(context)
                               : null,
@@ -281,11 +285,11 @@ class _FinancialScreenState extends State<FinancialScreen> {
                 ],
               )
             : AppBar(
-                title: const Text('Laporan Keuangan'),
+                title: Text(l10n.financialReport),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.print_rounded),
-                    tooltip: 'Cetak Laporan',
+                    tooltip: l10n.printReport,
                     onPressed: () => _printReport(context, vm, groomingVm),
                   ),
                 ],
@@ -293,7 +297,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
         floatingActionButton: _isSelecting
             ? null
             : FloatingActionButton(
-                onPressed: () => _showExpenseDialog(context, vm),
+                onPressed: () => _showExpenseDialog(context, vm, l10n),
                 child: const Icon(Icons.add_rounded),
               ),
         body: Column(
@@ -309,7 +313,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
                     icon: const Icon(Icons.chevron_left_rounded),
                   ),
                   Text(
-                    '${_monthName(currentMonth.month)} ${currentMonth.year}',
+                    '${_monthName(currentMonth.month, l10n)} ${currentMonth.year}',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   IconButton(
@@ -326,11 +330,11 @@ class _FinancialScreenState extends State<FinancialScreen> {
               child: IntrinsicHeight(
                 child: Row(
                   children: [
-                    Expanded(child: _SummaryItem('Pemasukan', vm.monthlyIncome, Colors.green, isDark)),
+                    Expanded(child: _SummaryItem(l10n.income, vm.monthlyIncome, Colors.green, isDark)),
                     const VerticalDivider(width: 16),
-                    Expanded(child: _SummaryItem('Pengeluaran', vm.monthlyExpense, Colors.redAccent, isDark)),
+                    Expanded(child: _SummaryItem(l10n.expense, vm.monthlyExpense, Colors.redAccent, isDark)),
                     const VerticalDivider(width: 16),
-                     Expanded(child: _SummaryItem('Laba Bersih', vm.monthlyIncome - vm.monthlyExpense, Colors.blue, isDark)),
+                     Expanded(child: _SummaryItem(l10n.netProfit, vm.monthlyIncome - vm.monthlyExpense, Colors.blue, isDark)),
                   ],
                 ),
               ),
@@ -338,10 +342,10 @@ class _FinancialScreenState extends State<FinancialScreen> {
             const SizedBox(height: 16),
 
             // ─── Tabs ───────────────────────────────────────────────────────
-            const TabBar(
+            TabBar(
               tabs: [
-                Tab(text: 'Pemasukan'),
-                Tab(text: 'Pengeluaran'),
+                Tab(text: l10n.income),
+                Tab(text: l10n.expense),
               ],
             ),
 
@@ -357,7 +361,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Owner: $_lockedOwnerName — hanya transaksi dari owner ini',
+                        l10n.ownerSameHint(_lockedOwnerName!),
                         style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary),
                       ),
                     ),
@@ -372,6 +376,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
                   _IncomeTab(
                     vm: vm,
                     groomingVm: groomingVm,
+                    l10n: l10n,
                     isDark: isDark,
                     isSelecting: _isSelecting,
                     selectedKeys: _selectedKeys,
@@ -393,7 +398,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
                       }
                     },
                   ),
-                  _ExpenseTab(vm: vm, isDark: isDark),
+                  _ExpenseTab(vm: vm, isDark: isDark, l10n: l10n),
                 ],
               ),
             ),
@@ -403,30 +408,43 @@ class _FinancialScreenState extends State<FinancialScreen> {
     );
   }
 
-  String _monthName(int month) {
-    const names = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    return names[month - 1];
+  String _monthName(int month, AppLocalizations l10n) {
+    switch (month) {
+      case 1: return l10n.monthJan;
+      case 2: return l10n.monthFeb;
+      case 3: return l10n.monthMar;
+      case 4: return l10n.monthApr;
+      case 5: return l10n.monthMay;
+      case 6: return l10n.monthJun;
+      case 7: return l10n.monthJul;
+      case 8: return l10n.monthAug;
+      case 9: return l10n.monthSep;
+      case 10: return l10n.monthOct;
+      case 11: return l10n.monthNov;
+      case 12: return l10n.monthDec;
+      default: return '';
+    }
   }
 
-  void _showExpenseDialog(BuildContext context, FinancialViewModel vm) {
+  void _showExpenseDialog(BuildContext context, FinancialViewModel vm, AppLocalizations l10n) {
     final noteCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Tambah Pengeluaran'),
+        title: Text(l10n.addExpense),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: noteCtrl,
-              decoration: const InputDecoration(labelText: 'Keterangan'),
+              decoration: InputDecoration(labelText: l10n.description),
               textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: amountCtrl,
-              decoration: const InputDecoration(labelText: 'Jumlah (Rp)', prefixText: 'Rp '),
+              decoration: InputDecoration(labelText: l10n.amountRp, prefixText: 'Rp '),
               keyboardType: TextInputType.number,
               inputFormatters: [CurrencyInputFormatter()],
             ),
@@ -440,13 +458,13 @@ class _FinancialScreenState extends State<FinancialScreen> {
               final raw = amountCtrl.text.replaceAll('.', '');
               final amount = double.tryParse(raw) ?? 0;
               if (note.isEmpty || amount <= 0) return;
-              await vm.addExpense(note, amount, 'Umum', DateTime.now().millisecondsSinceEpoch);
+              await vm.addExpense(note, amount, l10n.generalCategory, DateTime.now().millisecondsSinceEpoch);
               if (context.mounted) {
                 context.read<GroomingViewModel>().refreshDashboardStats();
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Simpan'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -485,6 +503,7 @@ class _SummaryItem extends StatelessWidget {
 class _IncomeTab extends StatelessWidget {
   final FinancialViewModel vm;
   final GroomingViewModel groomingVm;
+  final AppLocalizations l10n;
   final bool isDark;
   final bool isSelecting;
   final Set<String> selectedKeys;
@@ -496,6 +515,7 @@ class _IncomeTab extends StatelessWidget {
   const _IncomeTab({
     required this.vm,
     required this.groomingVm,
+    required this.l10n,
     required this.isDark,
     required this.isSelecting,
     required this.selectedKeys,
@@ -531,22 +551,22 @@ class _IncomeTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         // Breakdown
-        Text('Rincian Pemasukan', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(l10n.incomeDetailsHeader, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         
         // Grooming Bar
-        _IncomeBar(label: 'Grooming', amount: vm.groomingIncome, percent: groomingPct, color: Colors.green),
+        _IncomeBar(label: l10n.groomingLabel, amount: vm.groomingIncome, percent: groomingPct, color: Colors.green),
         const SizedBox(height: 12),
         // Hotel Bar
-        _IncomeBar(label: 'Hotel', amount: vm.hotelIncome, percent: hotelPct, color: Colors.blue),
+        _IncomeBar(label: l10n.hotelLabel, amount: vm.hotelIncome, percent: hotelPct, color: Colors.blue),
         
         const SizedBox(height: 24),
-         Text('Riwayat Transaksi', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+         Text(l10n.transactionHistoryHeader, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         if (!isSelecting)
           Padding(
             padding: const EdgeInsets.only(top: 2, bottom: 4),
             child: Text(
-              'Tekan lama untuk memilih & cetak invoice gabungan (1 owner)',
+              l10n.longPressCombineHint,
               style: TextStyle(fontSize: 11, color: isDark ? Colors.grey : Colors.grey[600]),
             ),
           ),
@@ -555,7 +575,7 @@ class _IncomeTab extends StatelessWidget {
         if (transactions.isEmpty)
            Padding(
             padding: const EdgeInsets.all(32),
-            child: Center(child: Text('Belum ada transaksi.', style: TextStyle(color: isDark ? Colors.grey : Colors.grey[600]))),
+            child: Center(child: Text(l10n.noTransactions, style: TextStyle(color: isDark ? Colors.grey : Colors.grey[600]))),
           )
         else
           ...transactions.map((txn) {
@@ -570,8 +590,8 @@ class _IncomeTab extends StatelessWidget {
              final isDifferentOwner = isSelecting && lockedOwnerName != null && owner != lockedOwnerName;
              
              final title = isSession 
-                 ? 'Grooming - $catName' 
-                 : 'Hotel - $catName';
+                 ? '${l10n.groomingLabel} - $catName' 
+                 : '${l10n.hotelLabel} - $catName';
              
              return Opacity(
                opacity: isDifferentOwner ? 0.4 : 1.0,
@@ -661,14 +681,15 @@ class _IncomeBar extends StatelessWidget {
 class _ExpenseTab extends StatelessWidget {
   final FinancialViewModel vm;
   final bool isDark;
+  final AppLocalizations l10n;
 
-  const _ExpenseTab({required this.vm, required this.isDark});
+  const _ExpenseTab({required this.vm, required this.isDark, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
       if (vm.expenses.isEmpty) {
         return Center(
-          child: Text('Belum ada pengeluaran.', style: TextStyle(color: isDark ? Colors.grey : Colors.grey[600])),
+          child: Text(l10n.noTransactions, style: TextStyle(color: isDark ? Colors.grey : Colors.grey[600])),
         );
       }
 
@@ -690,21 +711,21 @@ class _ExpenseTab extends StatelessWidget {
               app_date.formatCurrencyDouble(expense.amount),
               style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent),
             ),
-            onLongPress: () => _showDeleteConfirm(context, vm, expense),
+            onLongPress: () => _showDeleteConfirm(context, vm, expense, l10n),
           ),
         );
       },
     );
   }
 
-  void _showDeleteConfirm(BuildContext context, FinancialViewModel vm, dynamic expense) {
+  void _showDeleteConfirm(BuildContext context, FinancialViewModel vm, dynamic expense, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Data'),
-        content: const Text('Hapus pengeluaran ini?'),
+        title: Text(l10n.deleteConfirmTitle),
+        content: Text(l10n.deleteExpenseConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () async {
               await vm.deleteExpense(expense);
@@ -714,7 +735,7 @@ class _ExpenseTab extends StatelessWidget {
               }
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Hapus'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

@@ -1,8 +1,11 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
@@ -42,15 +45,12 @@ void main() async {
   
   if (kIsWeb) {
     databaseFactory = createDatabaseFactoryFfiWeb(noWebWorker: true);
-  } else {
-    // Desktop (Windows/Linux) FFI init
-    try {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-    } catch (_) {
-      // Android/iOS use default sqflite, no init needed
-    }
+  } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    // Desktop only — use FFI
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
   }
+  // Android/iOS: use default sqflite (no init needed)
   
   // Initialize Notifications (skip on web)
   if (!kIsWeb) {
@@ -98,6 +98,18 @@ class JeniCathouseApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: vm.themeMode,
+      locale: Locale(vm.currentLanguage),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('id'), // Indonesian
+        Locale('en'), // English
+        Locale('ms'), // Malay
+      ],
       home: const _HomeWrapper(),
       builder: (context, child) => GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -207,16 +219,20 @@ class _MainShellState extends State<MainShell> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _QuickActionSheet(
-        onNewSession: () {
-          Navigator.pop(context);
-          Navigator.pushNamed(context, '/session_entry');
-        },
-        onCheckIn: () {
-          Navigator.pop(context);
-          Navigator.pushNamed(context, '/hotel');
-        },
-      ),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return _QuickActionSheet(
+          l10n: l10n,
+          onNewSession: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/session_entry');
+          },
+          onCheckIn: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/hotel');
+          },
+        );
+      },
     );
   }
 
@@ -230,6 +246,7 @@ class _MainShellState extends State<MainShell> {
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: IndexedStack(
@@ -258,14 +275,14 @@ class _MainShellState extends State<MainShell> {
             children: [
               _NavItem(
                 icon: Icons.home_rounded,
-                label: 'Beranda',
+                label: l10n.home,
                 isSelected: _currentIndex == 0,
                 onTap: () => _onTabTapped(0),
                 index: 0,
               ),
               _NavItem(
                 icon: Icons.history_rounded,
-                label: 'Aktivitas',
+                label: l10n.activity,
                 isSelected: _currentIndex == 1,
                 onTap: () => _onTabTapped(1),
                 index: 1,
@@ -273,14 +290,14 @@ class _MainShellState extends State<MainShell> {
               const SizedBox(width: 48), // Space for FAB
               _NavItem(
                 icon: Icons.bar_chart_rounded,
-                label: 'Keuangan',
+                label: l10n.financial,
                 isSelected: _currentIndex == 3,
                 onTap: () => _onTabTapped(3),
                 index: 3,
               ),
               _NavItem(
                 icon: Icons.person_rounded,
-                label: 'Akun',
+                label: l10n.account,
                 isSelected: _currentIndex == 4,
                 onTap: () => _onTabTapped(4),
                 index: 4,
@@ -352,10 +369,12 @@ class _NavItem extends StatelessWidget {
 // ─── Quick Action Bottom Sheet ───────────────────────────────────────────────
 
 class _QuickActionSheet extends StatelessWidget {
+  final AppLocalizations l10n;
   final VoidCallback onNewSession;
   final VoidCallback onCheckIn;
 
   const _QuickActionSheet({
+    required this.l10n,
     required this.onNewSession,
     required this.onCheckIn,
   });
@@ -379,7 +398,7 @@ class _QuickActionSheet extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'Aksi Cepat',
+            l10n.quickAction,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -390,7 +409,7 @@ class _QuickActionSheet extends StatelessWidget {
               Expanded(
                 child: _QuickActionTile(
                   icon: Icons.content_cut_rounded,
-                  label: 'Sesi Baru',
+                  label: l10n.newSession,
                   color: isDark ? AppColors.accentGreen : AppColors.lightPrimary,
                   onTap: onNewSession,
                 ),
@@ -399,7 +418,7 @@ class _QuickActionSheet extends StatelessWidget {
               Expanded(
                 child: _QuickActionTile(
                   icon: Icons.hotel_rounded,
-                  label: 'Check-in Hotel',
+                  label: l10n.hotelCheckIn,
                   color: isDark ? AppColors.accentPurple : AppColors.lightPrimaryDark,
                   onTap: onCheckIn,
                 ),

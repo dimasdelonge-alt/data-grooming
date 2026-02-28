@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../util/settings_preferences.dart';
 import '../../util/device_id_helper.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   final SettingsPreferences settingsPrefs;
@@ -39,11 +40,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     final shopId = _shopIdController.text.trim().toLowerCase();
     final password = _passwordController.text;
 
     if (shopId.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Shop ID dan Password harus diisi');
+      setState(() => _error = l10n.errEmptyShopIdPassword);
       return;
     }
 
@@ -51,20 +54,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final storedKey = await _firebaseRepo.getSecretKey(shopId);
+      if (!mounted) return;
       if (storedKey == null) {
-        setState(() { _error = 'Shop ID tidak ditemukan'; _isLoading = false; });
+        setState(() { _error = l10n.errShopIdNotFound; _isLoading = false; });
         return;
       }
 
       final hashedInput = _hashPassword(password);
-      if (storedKey == hashedInput) {
+      // Dual check: SHA-256 hash first, then plain-text fallback for old keys
+      final isMatch = (storedKey == hashedInput) || (storedKey == password);
+      if (isMatch) {
         // Cek Limit Device
         final subStatus = await _firebaseRepo.checkSubscriptionStatus(shopId);
         if (widget.settingsPrefs.deviceId.isEmpty) {
           widget.settingsPrefs.deviceId = DeviceIdHelper.generateDeviceId();
         }
         
-        final deviceName = kIsWeb ? 'Web Browser' : (Platform.isAndroid ? 'Android Device' : 'iOS/Other Device');
+        final deviceName = kIsWeb ? l10n.deviceWebBrowser : (Platform.isAndroid ? l10n.deviceAndroid : l10n.deviceIosOther);
         final isAllowed = await _firebaseRepo.registerDevice(
           shopId, 
           widget.settingsPrefs.deviceId, 
@@ -72,49 +78,52 @@ class _LoginScreenState extends State<LoginScreen> {
           subStatus.maxDevices
         );
 
+        if (!mounted) return;
         if (!isAllowed) {
           setState(() { 
-            _error = 'Login ditolak: Limit perangkat tercapai (${subStatus.maxDevices} device).\nSilakan upgrade ke PRO untuk akses lebih banyak.'; 
+            _error = l10n.errDeviceLimit(subStatus.maxDevices); 
             _isLoading = false; 
           });
           return;
         }
 
-        // Login berhasil
+        // Login berhasil — save the stored key as-is
         widget.settingsPrefs.storeId = shopId;
-        widget.settingsPrefs.syncSecretKey = hashedInput;
+        widget.settingsPrefs.syncSecretKey = storedKey;
         widget.settingsPrefs.isCloudSyncEnabled = true;
         widget.settingsPrefs.userPlan = subStatus.plan;
         widget.settingsPrefs.maxDevices = subStatus.maxDevices;
         widget.settingsPrefs.validUntil = subStatus.validUntil;
         widget.onLoginSuccess();
       } else {
-        setState(() { _error = 'Password salah'; _isLoading = false; });
+        setState(() { _error = l10n.errWrongPassword; _isLoading = false; });
       }
     } catch (e) {
-      setState(() { _error = 'Gagal terhubung ke server'; _isLoading = false; });
+      if (mounted) setState(() { _error = l10n.errNetwork; _isLoading = false; });
     }
   }
 
   Future<void> _handleRegister() async {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     final shopId = _shopIdController.text.trim().toLowerCase();
     final password = _passwordController.text;
     final confirm = _confirmPasswordController.text;
 
     if (shopId.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Semua field harus diisi');
+      setState(() => _error = l10n.errAllFieldsRequired);
       return;
     }
     if (shopId.contains(' ') || shopId.contains('/')) {
-      setState(() => _error = 'Shop ID tidak boleh mengandung spasi atau /');
+      setState(() => _error = l10n.errInvalidShopId);
       return;
     }
     if (password.length < 6) {
-      setState(() => _error = 'Password minimal 6 karakter');
+      setState(() => _error = l10n.errPasswordMinLength);
       return;
     }
     if (password != confirm) {
-      setState(() => _error = 'Password tidak cocok');
+      setState(() => _error = l10n.errPasswordMismatch);
       return;
     }
 
@@ -123,8 +132,9 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // Check if shop ID already exists
       final existing = await _firebaseRepo.getSecretKey(shopId);
+      if (!mounted) return;
       if (existing != null) {
-        setState(() { _error = 'Shop ID "$shopId" sudah dipakai, coba yang lain'; _isLoading = false; });
+        setState(() { _error = l10n.errShopIdTaken(shopId); _isLoading = false; });
         return;
       }
 
@@ -136,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (widget.settingsPrefs.deviceId.isEmpty) {
         widget.settingsPrefs.deviceId = DeviceIdHelper.generateDeviceId();
       }
-      final deviceName = kIsWeb ? 'Web Browser' : (Platform.isAndroid ? 'Android Device' : 'iOS/Other Device');
+      final deviceName = kIsWeb ? l10n.deviceWebBrowser : (Platform.isAndroid ? l10n.deviceAndroid : l10n.deviceIosOther);
       await _firebaseRepo.registerDevice(
         shopId, 
         widget.settingsPrefs.deviceId, 
@@ -152,15 +162,16 @@ class _LoginScreenState extends State<LoginScreen> {
       widget.settingsPrefs.maxDevices = 1;
       widget.onLoginSuccess();
     } catch (e) {
-      setState(() { _error = 'Gagal membuat akun: $e'; _isLoading = false; });
+      if (mounted) setState(() { _error = l10n.errCreateAccount(e.toString()); _isLoading = false; });
     }
   }
 
   void _openWhatsApp() async {
+    final l10n = AppLocalizations.of(context)!;
     final shopId = _shopIdController.text.trim();
     final message = shopId.isNotEmpty
-        ? 'Halo, saya lupa password SmartGroomer. Shop ID saya: $shopId'
-        : 'Halo, saya lupa password SmartGroomer.';
+        ? l10n.msgForgotPwdWithId(shopId)
+        : l10n.msgForgotPwd;
     final url = Uri.parse('https://wa.me/6282137895794?text=${Uri.encodeComponent(message)}');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -177,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
@@ -194,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Icon(Icons.pets_rounded, size: 64, color: primaryColor),
                 const SizedBox(height: 12),
                 Text(
-                  'Data Groomer App',
+                  l10n.appName,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -203,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _isRegisterMode ? 'Buat Akun Baru' : 'Masuk ke Akun',
+                  _isRegisterMode ? l10n.createAccount : l10n.signInToAccount,
                   style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -223,8 +234,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextField(
                           controller: _shopIdController,
                           decoration: InputDecoration(
-                            labelText: 'Shop ID',
-                            hintText: 'cth: jeni_cathouse',
+                            labelText: l10n.shopId,
+                            hintText: l10n.shopIdHint,
                             prefixIcon: const Icon(Icons.store_rounded),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -237,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _passwordController,
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
-                            labelText: 'Password',
+                            labelText: l10n.password,
                             prefixIcon: const Icon(Icons.lock_rounded),
                             suffixIcon: IconButton(
                               icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
@@ -256,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _confirmPasswordController,
                             obscureText: _obscureConfirm,
                             decoration: InputDecoration(
-                              labelText: 'Ulangi Password',
+                              labelText: l10n.repeatPassword,
                               prefixIcon: const Icon(Icons.lock_outline_rounded),
                               suffixIcon: IconButton(
                                 icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
@@ -299,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: _isLoading
                                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                                 : Text(
-                                    _isRegisterMode ? 'Daftar' : 'Masuk',
+                                    _isRegisterMode ? l10n.register : l10n.login,
                                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                   ),
                           ),
@@ -321,7 +332,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     });
                   },
                   child: Text(
-                    _isRegisterMode ? 'Sudah punya akun? Masuk' : 'Belum punya akun? Buat Baru',
+                    _isRegisterMode ? l10n.alreadyHaveAccount : l10n.dontHaveAccount,
                     style: TextStyle(color: primaryColor),
                   ),
                 ),
@@ -332,7 +343,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton.icon(
                     onPressed: _openWhatsApp,
                     icon: const Icon(Icons.chat_rounded, size: 18),
-                    label: const Text('Lupa Password? Hubungi Admin'),
+                    label: Text(l10n.forgotPasswordAdmin),
                     style: TextButton.styleFrom(
                       foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),

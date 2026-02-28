@@ -7,6 +7,7 @@ import '../../data/entity/cat.dart';
 import '../../data/entity/session.dart';
 import '../../util/date_utils.dart' as app_date;
 import '../../util/reminder_utils.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -29,6 +30,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
   Widget build(BuildContext context) {
     final vm = context.watch<GroomingViewModel>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 900;
@@ -38,13 +40,13 @@ class _DashboardBodyState extends State<_DashboardBody> {
       body: CustomScrollView(
         slivers: [
           // ─── Gradient Header ───────────────────────────────
-          SliverToBoxAdapter(child: _buildHeader(context, vm, isDark)),
+          SliverToBoxAdapter(child: _buildHeader(context, vm, isDark, l10n)),
 
           // ─── Stats Card ────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 16, isDesktop ? 32 : 16, isDesktop ? 32 : 16, 8),
-              child: _buildStatsCard(context, vm, isDark),
+              child: _buildStatsCard(context, vm, isDark, l10n),
             ),
           ),
     
@@ -52,7 +54,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 16, isDesktop ? 24 : 8, isDesktop ? 32 : 16, 8),
-                    child: _buildFeatureGrid(context, isDark),
+                    child: _buildFeatureGrid(context, isDark, l10n),
                   ),
                 ),
     
@@ -61,7 +63,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 16, 8, isDesktop ? 32 : 16, 8),
-                      child: _buildActiveBanner(context, vm, isDark),
+                      child: _buildActiveBanner(context, vm, isDark, l10n),
                     ),
                   ),
     
@@ -72,7 +74,8 @@ class _DashboardBodyState extends State<_DashboardBody> {
                       padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 16, isDesktop ? 24 : 8, isDesktop ? 32 : 16, 4),
                       child: _sectionHeader(
                         context,
-                        'Aktivitas Terbaru',
+                        l10n.recentActivity,
+                        l10n,
                         onSeeAll: () {
                           Navigator.pushNamed(context, '/session_list');
                         },
@@ -107,7 +110,8 @@ class _DashboardBodyState extends State<_DashboardBody> {
                       padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 16, isDesktop ? 24 : 12, isDesktop ? 32 : 16, 4),
                       child: _sectionHeader(
                         context,
-                        'Daftar Kucing (${vm.allCats.length})',
+                        l10n.catListCount(vm.allCats.length),
+                        l10n,
                         onSeeAll: () {
                           Navigator.pushNamed(context, '/cat_list');
                         },
@@ -144,7 +148,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
   // HEADER
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildHeader(BuildContext context, GroomingViewModel vm, bool isDark) {
+  Widget _buildHeader(BuildContext context, GroomingViewModel vm, bool isDark, AppLocalizations l10n) {
     // V2 Logic: count only new reminders since last check
     final lastCheck = vm.lastNotificationCheck;
     final urgentCount = vm.marketingReminders.where((r) {
@@ -178,7 +182,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
                 Row(
                   children: [
                     Text(
-                      _getGreetingText(),
+                      _getGreetingText(l10n),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Colors.white70,
                           ),
@@ -201,7 +205,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
                   ],
                 ),
                 Text(
-                  vm.businessName.isEmpty ? 'Nama Bisnis' : vm.businessName,
+                  vm.businessName.isEmpty ? l10n.businessNamePlaceholder : vm.businessName,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -217,7 +221,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
                   isLabelVisible: urgentCount > 0,
                   offset: const Offset(-6, 6), // Pull it closer to the bell
                   child: IconButton(
-                    onPressed: () => _showReminders(context, vm),
+                    onPressed: () => _showReminders(context, vm, l10n),
                     icon: const Icon(Icons.notifications_rounded, color: Colors.white),
                   ),
                 ),
@@ -229,12 +233,12 @@ class _DashboardBodyState extends State<_DashboardBody> {
     );
   }
 
-  String _getGreetingText() {
+  String _getGreetingText(AppLocalizations l10n) {
     final hour = DateTime.now().hour;
-    if (hour < 10) return 'Selamat Pagi';
-    if (hour < 15) return 'Selamat Siang';
-    if (hour < 18) return 'Selamat Sore';
-    return 'Selamat Malam';
+    if (hour < 10) return l10n.goodMorning;
+    if (hour < 15) return l10n.goodAfternoon;
+    if (hour < 18) return l10n.goodEvening;
+    return l10n.goodNight;
   }
 
   String _getWeatherEmoji() {
@@ -249,7 +253,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
   // STATS CARD
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildStatsCard(BuildContext context, GroomingViewModel vm, bool isDark) {
+  Widget _buildStatsCard(BuildContext context, GroomingViewModel vm, bool isDark, AppLocalizations l10n) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -269,7 +273,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Laba Bersih ${vm.currentMonthName}',
+                  '${l10n.netProfit} ${vm.currentMonthName}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
                       ),
@@ -281,7 +285,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '${vm.currentMonthSessionCount} sesi',
+                    l10n.sessionsCountLabel(vm.currentMonthSessionCount),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -316,7 +320,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
                   context,
                   Icons.arrow_upward_rounded,
                   const Color(0xFF66BB6A),
-                  'Pemasukan',
+                  l10n.income,
                   app_date.formatCurrencyDouble(vm.currentMonthIncome),
                 ),
                 const SizedBox(width: 24),
@@ -324,7 +328,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
                   context,
                   Icons.arrow_downward_rounded,
                   const Color(0xFFEF5350),
-                  'Pengeluaran',
+                  l10n.expense,
                   app_date.formatCurrencyDouble(vm.currentMonthExpense),
                 ),
               ],
@@ -371,16 +375,16 @@ class _DashboardBodyState extends State<_DashboardBody> {
   // FEATURE GRID
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildFeatureGrid(BuildContext context, bool isDark) {
+  Widget _buildFeatureGrid(BuildContext context, bool isDark, AppLocalizations l10n) {
     final features = [
-      _FeatureItem(Icons.content_cut_rounded, 'Sesi Baru', 0, () => Navigator.pushNamed(context, '/session_entry')),
-      _FeatureItem(Icons.pets_rounded, 'Kucing', 1, () => Navigator.pushNamed(context, '/cat_list')),
-      _FeatureItem(Icons.hotel_rounded, 'Hotel', 2, () => Navigator.pushNamed(context, '/hotel')),
-      _FeatureItem(Icons.event_note_rounded, 'Booking', 3, () => Navigator.pushNamed(context, '/booking')),
-      _FeatureItem(Icons.account_balance_wallet_rounded, 'Deposit', 4, () => Navigator.pushNamed(context, '/deposit')),
-      _FeatureItem(Icons.list_alt_rounded, 'Layanan', 5, () => Navigator.pushNamed(context, '/service_list')),
-      _FeatureItem(Icons.calendar_today_rounded, 'Kalender', 6, () => Navigator.pushNamed(context, '/calendar')),
-      _FeatureItem(Icons.settings_rounded, 'Pengaturan', 7, () => Navigator.pushNamed(context, '/settings')),
+      _FeatureItem(Icons.content_cut_rounded, l10n.newSession, 0, () => Navigator.pushNamed(context, '/session_entry')),
+      _FeatureItem(Icons.pets_rounded, l10n.cats, 1, () => Navigator.pushNamed(context, '/cat_list')),
+      _FeatureItem(Icons.hotel_rounded, l10n.hotel, 2, () => Navigator.pushNamed(context, '/hotel')),
+      _FeatureItem(Icons.event_note_rounded, l10n.booking, 3, () => Navigator.pushNamed(context, '/booking')),
+      _FeatureItem(Icons.account_balance_wallet_rounded, l10n.deposit, 4, () => Navigator.pushNamed(context, '/deposit')),
+      _FeatureItem(Icons.list_alt_rounded, l10n.services, 5, () => Navigator.pushNamed(context, '/service_list')),
+      _FeatureItem(Icons.calendar_today_rounded, l10n.calendar, 6, () => Navigator.pushNamed(context, '/calendar')),
+      _FeatureItem(Icons.settings_rounded, l10n.settings, 7, () => Navigator.pushNamed(context, '/settings')),
     ];
 
     final screenWidth = MediaQuery.of(context).size.width;
@@ -423,7 +427,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
   // ACTIVE SESSIONS BANNER
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildActiveBanner(BuildContext context, GroomingViewModel vm, bool isDark) {
+  Widget _buildActiveBanner(BuildContext context, GroomingViewModel vm, bool isDark, AppLocalizations l10n) {
     return InkWell(
       onTap: () => Navigator.pushNamed(context, '/session_entry'),
       borderRadius: BorderRadius.circular(16),
@@ -459,11 +463,11 @@ class _DashboardBodyState extends State<_DashboardBody> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${vm.activeSessions.length} Sesi Aktif',
+                    '${vm.activeSessions.length} ${l10n.activeSessions}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                   Text(
-                    'Sedang diproses sekarang',
+                    l10n.processingNow,
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
@@ -487,7 +491,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
   // SECTION HEADER
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _sectionHeader(BuildContext context, String title, {VoidCallback? onSeeAll}) {
+  Widget _sectionHeader(BuildContext context, String title, AppLocalizations l10n, {VoidCallback? onSeeAll}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -502,7 +506,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
             onPressed: onSeeAll,
             child: Row(
               children: [
-                const Text('Lihat Semua', style: TextStyle(fontSize: 12)),
+                Text(l10n.seeAll, style: const TextStyle(fontSize: 12)),
                 const SizedBox(width: 4),
                 const Icon(Icons.arrow_forward_ios_rounded, size: 10),
               ],
@@ -516,7 +520,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
   // REMINDERS BOTTOM SHEET
   // ═══════════════════════════════════════════════════════════════════════════
 
-  void _showReminders(BuildContext context, GroomingViewModel vm) {
+  void _showReminders(BuildContext context, GroomingViewModel vm, AppLocalizations l10n) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -548,15 +552,15 @@ class _DashboardBodyState extends State<_DashboardBody> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Jadwal Grooming',
+                    l10n.groomingSchedule,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                   const SizedBox(height: 20),
                   if (vm.marketingReminders.isEmpty)
-                    const Expanded(
-                      child: Center(child: Text('Tidak ada jadwal ulang')),
+                    Expanded(
+                      child: Center(child: Text(l10n.noReschedule)),
                     )
                   else
                     Expanded(
@@ -587,7 +591,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               subtitle: Text(
-                                '${r.cat.ownerName} • ${r.daysSince} hari lalu',
+                                '${r.cat.ownerName} • ${l10n.daysAgoLabel(r.daysSince)}',
                               ),
                               trailing: IconButton(
                                 icon: const Icon(Icons.phone_rounded, color: Color(0xFF25D366)),
@@ -700,6 +704,7 @@ class _SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final statusColor = _statusColor(session.status);
 
     return Card(
@@ -749,7 +754,7 @@ class _SessionCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      session.status,
+                      _getStatusLabel(session.status, l10n),
                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor),
                     ),
                   ),
@@ -778,6 +783,25 @@ class _SessionCard extends StatelessWidget {
         return const Color(0xFF9E9E9E);
       default:
         return const Color(0xFF9E9E9E);
+    }
+  }
+
+  String _getStatusLabel(String status, AppLocalizations l10n) {
+    switch (status) {
+      case 'WAITING':
+        return l10n.statusWaiting;
+      case 'BATHING':
+        return l10n.statusBathing;
+      case 'DRYING':
+        return l10n.statusDrying;
+      case 'FINISHING':
+        return l10n.statusFinishing;
+      case 'PICKUP_READY':
+        return l10n.statusPickupReady;
+      case 'DONE':
+        return l10n.statusDone;
+      default:
+        return status;
     }
   }
 }
@@ -817,14 +841,14 @@ class _CatCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${cat.breed} • ${cat.gender}',
+                      '${cat.breed} • ${_getGenderLabel(cat.gender, AppLocalizations.of(context)!)}',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
                       ),
                     ),
                     Text(
-                      'Owner: ${cat.ownerName}',
+                      '${AppLocalizations.of(context)!.owner}: ${cat.ownerName}',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
@@ -847,6 +871,12 @@ class _CatCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getGenderLabel(String gender, AppLocalizations l10n) {
+    if (gender.toLowerCase() == 'male') return l10n.male;
+    if (gender.toLowerCase() == 'female') return l10n.female;
+    return gender;
   }
 }
 

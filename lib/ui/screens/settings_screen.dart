@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +6,7 @@ import 'dart:convert' as dart_convert;
 import '../grooming_view_model.dart';
 import '../../util/security_preferences.dart';
 import '../../util/image_utils.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -44,7 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (context.mounted && base64Str != null) {
           await context.read<GroomingViewModel>().updateLogo(base64Str);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Logo berhasil diperbarui ✅')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.changesSaved)),
           );
         }
       }
@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       debugPrint('Error picking logo: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengambil gambar: $e')),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.error}: $e')),
         );
       }
     }
@@ -91,44 +91,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<GroomingViewModel>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pengaturan')),
+      appBar: AppBar(title: Text(l10n.settings)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ─── Theme Settings ──────────────────────────────────────────────
-            _SectionHeader('Tampilan'),
+            _SectionHeader(l10n.appearance),
             Card(
               child: Column(
                 children: [
                   RadioListTile<ThemeMode>(
-                    title: const Text('Ikuti Sistem'),
+                    title: Text(l10n.followSystem),
                     value: ThemeMode.system,
                     groupValue: vm.themeMode,
                     onChanged: (val) => vm.setTheme(0),
                   ),
                   RadioListTile<ThemeMode>(
-                    title: const Text('Mode Terang'),
+                    title: Text(l10n.lightMode),
                     value: ThemeMode.light,
                     groupValue: vm.themeMode,
                     onChanged: (val) => vm.setTheme(1),
                   ),
                   RadioListTile<ThemeMode>(
-                    title: const Text('Mode Gelap'),
+                    title: Text(l10n.darkMode),
                     value: ThemeMode.dark,
                     groupValue: vm.themeMode,
                     onChanged: (val) => vm.setTheme(2),
                   ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: l10n.language,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.language),
+                      ),
+                      value: vm.currentLanguage,
+                      items: const [
+                        DropdownMenuItem(value: 'id', child: Text('🇮🇩 Bahasa Indonesia')),
+                        DropdownMenuItem(value: 'en', child: Text('🇬🇧 English')),
+                        DropdownMenuItem(value: 'ms', child: Text('🇲🇾 Bahasa Melayu')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          vm.setLanguage(val);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
             // ─── Branding / Logo ─────────────────────────────────────────────
-            _SectionHeader('Branding Toko'),
+            _SectionHeader(l10n.shopBranding),
             Card(
               child: ListTile(
                 leading: CircleAvatar(
@@ -148,11 +172,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         )
                       : const Icon(Icons.store, size: 28),
                 ),
-                title: const Text('Logo Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(l10n.invoiceLogo, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(
                   vm.userPlan.toLowerCase() == 'pro'
-                      ? 'Sesuaikan logo untuk struk/invoice Anda.'
-                      : 'Upgrade ke PRO untuk ganti logo.',
+                      ? l10n.logoCustomizationDesc
+                      : l10n.upgradeToProForLogo,
                   style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                 ),
                 trailing: vm.userPlan.toLowerCase() == 'pro'
@@ -162,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ? () => _pickLogo(context)
                     : () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Fitur khusus PRO! Silakan upgrade langganan.')),
+                          SnackBar(content: Text(l10n.proFeatureUpgradeRequired)),
                         );
                       },
               ),
@@ -170,7 +194,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             // ─── Business Info ───────────────────────────────────────────────
-            _SectionHeader('Informasi Bisnis'),
+            _SectionHeader(l10n.businessInformation),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -178,30 +202,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     TextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nama Bisnis',
-                        prefixIcon: Icon(Icons.store),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.businessName,
+                        prefixIcon: const Icon(Icons.store),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nomor Telepon',
-                        prefixIcon: Icon(Icons.phone),
-                        border: OutlineInputBorder(),
-                        hintText: 'Untuk header struk/invoice',
+                      decoration: InputDecoration(
+                        labelText: l10n.businessPhone,
+                        prefixIcon: const Icon(Icons.phone),
+                        border: const OutlineInputBorder(),
+                        hintText: l10n.invoiceHeaderHint,
                       ),
                       keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _addressController,
-                      decoration: const InputDecoration(
-                        labelText: 'Alamat Bisnis',
-                        prefixIcon: Icon(Icons.location_on),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.businessAddress,
+                        prefixIcon: const Icon(Icons.location_on),
+                        border: const OutlineInputBorder(),
                       ),
                       maxLines: 3,
                       minLines: 1,
@@ -209,12 +233,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _storeIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'ID Toko',
+                      decoration: InputDecoration(
+                        labelText: l10n.shopId,
                         hintText: 'cth: my_petshop',
-                        prefixIcon: Icon(Icons.tag),
-                        border: OutlineInputBorder(),
-                        helperText: 'Gunakan huruf kecil, tanpa spasi',
+                        prefixIcon: const Icon(Icons.tag),
+                        border: const OutlineInputBorder(),
+                        helperText: l10n.shopIdLowerHint,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -231,15 +255,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                           if (_storeIdController.text.trim() != oldStoreId) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('ID Toko berubah. Cek menu Akun untuk Sinkronisasi.')),
+                              SnackBar(content: Text(l10n.shopIdChangedSyncAccount)),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Perubahan Disimpan')),
+                              SnackBar(content: Text(l10n.changesSaved)),
                             );
                           }
                         },
-                        child: const Text('Simpan Perubahan'),
+                        child: Text(l10n.saveChanges),
                       ),
                     ),
                   ],
@@ -249,23 +273,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             // ─── Notification Settings ──────────────────────────────────────
-            _SectionHeader('Pengaturan Notifikasi'),
+            _SectionHeader(l10n.notificationSettings),
             _NotificationSection(vm: vm),
             const SizedBox(height: 24),
 
             // ─── Security ────────────────────────────────────────────────────
-            _SectionHeader('Keamanan'),
+            _SectionHeader(l10n.security),
             if (_securityPrefs != null)
               _SecuritySection(securityPrefs: _securityPrefs!),
             const SizedBox(height: 24),
 
             // ─── Account & Security Nav ─────────────────────────────────────
-            _SectionHeader('Akun & Keamanan'),
+            _SectionHeader(l10n.accountAndBackup),
             Card(
               child: ListTile(
                 leading: Icon(Icons.account_circle, color: Theme.of(context).colorScheme.primary),
-                title: const Text('Kelola Akun & Langganan', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('Status: ${vm.userPlan.toUpperCase().isEmpty ? "FREE" : vm.userPlan.toUpperCase()}'),
+                title: Text(l10n.accountAndBackup, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text('${l10n.status}: ${vm.userPlan.toUpperCase().isEmpty ? l10n.planFree : vm.userPlan.toUpperCase()}'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.pushNamed(context, '/account'),
               ),
@@ -273,20 +297,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             // ─── About ───────────────────────────────────────────────────────
-            _SectionHeader('Tentang Aplikasi'),
+            _SectionHeader(l10n.aboutApp),
             const Card(
               child: ListTile(
                 leading: Icon(Icons.info_outline),
-                title: Text('Jeni Cat App'),
-                subtitle: Text('Versi 13.0 (Stable)'),
+                title: Text('Data Groomer App'),
+                subtitle: Text('v13.0 (Stable)'),
                 // legacy admin tap logic removed
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(13.0),
+            Padding(
+              padding: const EdgeInsets.all(13.0),
               child: Text(
-                'Terima kasih telah menggunakan Jeni Cat App.',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+                l10n.thankYouUsingApp,
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ),
           ],
@@ -322,6 +346,7 @@ class _NotificationSectionState extends State<_NotificationSection> {
   @override
   Widget build(BuildContext context) {
     final vm = widget.vm;
+    final l10n = AppLocalizations.of(context)!;
     final formattedTime = '${vm.reminderHour.toString().padLeft(2, '0')}:${vm.reminderMinute.toString().padLeft(2, '0')}';
 
     return Column(
@@ -334,8 +359,8 @@ class _NotificationSectionState extends State<_NotificationSection> {
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
             ),
-            title: const Text('Aktifkan Pengingat', style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(_isEnabled ? 'Notifikasi H-1 aktif' : 'Notifikasi dimatikan'),
+            title: Text(l10n.enableReminders, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(_isEnabled ? l10n.h1NotificationActive : l10n.notificationsDisabled),
             value: _isEnabled,
             onChanged: (val) {
               setState(() => _isEnabled = val);
@@ -352,8 +377,8 @@ class _NotificationSectionState extends State<_NotificationSection> {
           Card(
             child: ListTile(
               leading: Icon(Icons.access_time, color: Theme.of(context).colorScheme.primary),
-              title: const Text('Waktu Pengingat (H-1)', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('Jam: $formattedTime WIB'),
+              title: Text(l10n.reminderTimeH1, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(l10n.wibTimeLabel(formattedTime)),
               trailing: const Icon(Icons.edit),
               onTap: () => _showTimeDialog(context, vm),
             ),
@@ -364,6 +389,7 @@ class _NotificationSectionState extends State<_NotificationSection> {
   }
 
   void _showTimeDialog(BuildContext context, GroomingViewModel vm) {
+    final l10n = AppLocalizations.of(context)!;
     final hourController = TextEditingController(text: vm.reminderHour.toString());
     final minuteController = TextEditingController(text: vm.reminderMinute.toString());
     String? error;
@@ -372,18 +398,18 @@ class _NotificationSectionState extends State<_NotificationSection> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Atur Waktu Pengingat'),
+          title: Text(l10n.setReminderTime),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Notifikasi akan muncul 1 hari sebelum jadwal (H-1) pada jam yang ditentukan.'),
+              Text(l10n.reminderTimeDesc),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: hourController,
-                      decoration: const InputDecoration(labelText: 'Jam (0-23)', border: OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: l10n.hour023, border: const OutlineInputBorder()),
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -394,7 +420,7 @@ class _NotificationSectionState extends State<_NotificationSection> {
                   Expanded(
                     child: TextField(
                       controller: minuteController,
-                      decoration: const InputDecoration(labelText: 'Menit (0-59)', border: OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: l10n.minute059, border: const OutlineInputBorder()),
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -407,17 +433,17 @@ class _NotificationSectionState extends State<_NotificationSection> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
             FilledButton(
               onPressed: () {
                 final h = int.tryParse(hourController.text);
                 final m = int.tryParse(minuteController.text);
                 if (h == null || m == null) {
-                  setState(() => error = 'Masukkan angka yang valid');
+                  setState(() => error = l10n.invalidNumber);
                 } else if (h < 0 || h > 23) {
-                  setState(() => error = 'Jam harus 0-23');
+                  setState(() => error = l10n.hourLimit);
                 } else if (m < 0 || m > 59) {
-                  setState(() => error = 'Menit harus 0-59');
+                  setState(() => error = l10n.minuteLimit);
                 } else {
                   SharedPreferences.getInstance().then((prefs) {
                     prefs.setInt('reminder_hour', h);
@@ -426,11 +452,11 @@ class _NotificationSectionState extends State<_NotificationSection> {
                   });
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Waktu pengingat disimpan!')),
+                    SnackBar(content: Text(l10n.reminderTimeSaved)),
                   );
                 }
               },
-              child: const Text('Simpan'),
+              child: Text(l10n.save),
             ),
           ],
         ),
@@ -464,6 +490,7 @@ class _SecuritySectionState extends State<_SecuritySection> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         // PIN Lock Toggle
@@ -475,8 +502,8 @@ class _SecuritySectionState extends State<_SecuritySection> {
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
             ),
-            title: const Text('Kunci Aplikasi (PIN)', style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(_isAppLockEnabled ? 'PIN Aktif' : 'Kunci dimatikan'),
+            title: Text(l10n.appLockPin, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(_isAppLockEnabled ? l10n.pinActive : l10n.lockDisabled),
             value: _isAppLockEnabled,
             onChanged: (val) {
               if (val) {
@@ -485,7 +512,7 @@ class _SecuritySectionState extends State<_SecuritySection> {
                 setState(() => _isAppLockEnabled = false);
                 widget.securityPrefs.isAppLockEnabled = false;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Kunci Aplikasi Dimatikan')),
+                  SnackBar(content: Text(l10n.lockDisabledMsg)),
                 );
               }
             },
@@ -503,8 +530,8 @@ class _SecuritySectionState extends State<_SecuritySection> {
                     ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
               ),
-              title: const Text('Biometrik (Sidik Jari)', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(_isBiometricEnabled ? 'Aktif' : 'Tidak Aktif'),
+              title: Text(l10n.biometricFingerprint, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(_isBiometricEnabled ? l10n.active : l10n.inactive),
               value: _isBiometricEnabled,
               onChanged: (val) {
                 setState(() => _isBiometricEnabled = val);
@@ -518,6 +545,7 @@ class _SecuritySectionState extends State<_SecuritySection> {
   }
 
   void _showPinCreationDialog() {
+    final l10n = AppLocalizations.of(context)!;
     final pinController = TextEditingController();
     final confirmController = TextEditingController();
     String? error;
@@ -526,13 +554,13 @@ class _SecuritySectionState extends State<_SecuritySection> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Atur PIN Baru (6 Digit)'),
+          title: Text(l10n.setNewPin6Digit),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: pinController,
-                decoration: const InputDecoration(labelText: 'PIN Baru', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: l10n.newPin, border: const OutlineInputBorder()),
                 obscureText: true,
                 keyboardType: TextInputType.number,
                 maxLength: 6,
@@ -540,7 +568,7 @@ class _SecuritySectionState extends State<_SecuritySection> {
               const SizedBox(height: 8),
               TextField(
                 controller: confirmController,
-                decoration: const InputDecoration(labelText: 'Konfirmasi PIN', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: l10n.confirmPin, border: const OutlineInputBorder()),
                 obscureText: true,
                 keyboardType: TextInputType.number,
                 maxLength: 6,
@@ -552,24 +580,24 @@ class _SecuritySectionState extends State<_SecuritySection> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
             FilledButton(
               onPressed: () {
                 if (pinController.text.length != 6) {
-                  setState(() => error = 'PIN harus 6 digit');
+                  setState(() => error = l10n.pinMustBe6Digit);
                 } else if (pinController.text != confirmController.text) {
-                  setState(() => error = 'PIN tidak cocok');
+                  setState(() => error = l10n.pinMismatch);
                 } else {
                   widget.securityPrefs.savePin(pinController.text);
                   widget.securityPrefs.isAppLockEnabled = true;
                   this.setState(() => _isAppLockEnabled = true);
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('PIN Berhasil Diatur!')),
+                    SnackBar(content: Text(l10n.pinSuccessSet)),
                   );
                 }
               },
-              child: const Text('Simpan'),
+              child: Text(l10n.save),
             ),
           ],
         ),

@@ -6,6 +6,7 @@ import '../../data/entity/booking.dart';
 import '../../data/entity/cat.dart';
 import '../../util/date_utils.dart' as app_date;
 import '../../util/reminder_utils.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 /// Upcoming booking list with add/edit/delete/check-in actions.
 class BookingScreen extends StatefulWidget {
@@ -18,15 +19,16 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final vm = context.watch<GroomingViewModel>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final upcoming = vm.upcomingBookings;
     final cats = vm.allCats;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Booking Grooming')),
+      appBar: AppBar(title: Text(l10n.bookingGrooming)),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showBookingDialog(context, vm, cats),
+        onPressed: () => _showBookingDialog(context, vm, cats, l10n),
         child: const Icon(Icons.add_rounded),
       ),
       body: upcoming.isEmpty
@@ -36,7 +38,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 children: [
                   Icon(Icons.calendar_today_rounded, size: 64, color: isDark ? Colors.white24 : Colors.black12),
                   const SizedBox(height: 12),
-                  Text('Tidak ada jadwal booking.', style: TextStyle(color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext)),
+                  Text(l10n.noBookingSchedule, style: TextStyle(color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext)),
                 ],
               ),
             )
@@ -48,9 +50,10 @@ class _BookingScreenState extends State<BookingScreen> {
                 final cat = cats.where((c) => c.catId == booking.catId).firstOrNull;
                 return BookingCard(
                   booking: booking,
-                  catName: cat?.catName ?? 'Unknown',
-                  ownerName: cat?.ownerName ?? 'Unknown',
+                  catName: cat?.catName ?? l10n.unknown,
+                  ownerName: cat?.ownerName ?? l10n.unknown,
                   isDark: isDark,
+                  l10n: l10n,
                   onCheckIn: () {
                     vm.updateBookingStatus(booking, 'COMPLETED');
                     Navigator.pushNamed(context, '/session_entry', arguments: {'catId': booking.catId});
@@ -60,8 +63,8 @@ class _BookingScreenState extends State<BookingScreen> {
                       : null,
                   onConfirm: () => vm.updateBookingStatus(booking, 'CONFIRMED'),
                   onCancel: () => vm.updateBookingStatus(booking, 'CANCELLED'),
-                  onReschedule: () => _showRescheduleDialog(context, vm, booking),
-                  onDelete: () => _showDeleteDialog(context, vm, booking),
+                  onReschedule: () => _showRescheduleDialog(context, vm, booking, l10n),
+                  onDelete: () => _showDeleteDialog(context, vm, booking, l10n),
                 );
               },
             ),
@@ -69,7 +72,7 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   // ─── Add Booking Dialog ────────────────────────────────
-  void _showBookingDialog(BuildContext context, GroomingViewModel vm, List<Cat> cats) {
+  void _showBookingDialog(BuildContext context, GroomingViewModel vm, List<Cat> cats, AppLocalizations l10n) {
     Cat? selectedCat;
     DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
     TimeOfDay selectedTime = const TimeOfDay(hour: 9, minute: 0);
@@ -81,7 +84,7 @@ class _BookingScreenState extends State<BookingScreen> {
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setDlgState) {
           return AlertDialog(
-            title: const Text('Tambah Booking'),
+            title: Text(l10n.addBooking),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -105,9 +108,9 @@ class _BookingScreenState extends State<BookingScreen> {
                             return TextFormField(
                               controller: controller,
                               focusNode: focusNode,
-                              decoration: const InputDecoration(
-                                hintText: 'Cari Kucing / Owner',
-                                prefixIcon: Icon(Icons.search_rounded),
+                              decoration: InputDecoration(
+                                hintText: l10n.searchCatOrOwner,
+                                prefixIcon: const Icon(Icons.search_rounded),
                               ),
                               onFieldSubmitted: (value) => onFieldSubmitted(),
                             );
@@ -129,7 +132,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                       final cat = options.elementAt(index);
                                       return ListTile(
                                         title: Text(cat.catName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                        subtitle: Text('Owner: ${cat.ownerName}'),
+                                        subtitle: Text('${l10n.owner}: ${cat.ownerName}'),
                                         onTap: () => onSelected(cat),
                                       );
                                     },
@@ -147,7 +150,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           Navigator.pushNamed(context, '/cat_entry');
                         },
                         icon: const Icon(Icons.add_rounded),
-                        tooltip: 'Tambah Kucing Baru',
+                        tooltip: l10n.addNewCat,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     ],
@@ -184,14 +187,14 @@ class _BookingScreenState extends State<BookingScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  TextField(controller: serviceController, decoration: const InputDecoration(labelText: 'Jenis Layanan')),
+                  TextField(controller: serviceController, decoration: InputDecoration(labelText: l10n.serviceType)),
                   const SizedBox(height: 12),
-                  TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Catatan'), maxLines: 2),
+                  TextField(controller: notesController, decoration: InputDecoration(labelText: l10n.notes), maxLines: 2),
                 ],
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
               FilledButton(
                 onPressed: selectedCat == null
                     ? null
@@ -207,7 +210,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         ));
                         Navigator.pop(ctx);
                       },
-                child: const Text('Simpan'),
+                child: Text(l10n.save),
               ),
             ],
           );
@@ -217,7 +220,7 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   // ─── Reschedule Dialog ─────────────────────────────────
-  void _showRescheduleDialog(BuildContext _, GroomingViewModel vm, Booking booking) async {
+  void _showRescheduleDialog(BuildContext _, GroomingViewModel vm, Booking booking, AppLocalizations l10n) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.fromMillisecondsSinceEpoch(booking.bookingDate),
@@ -238,21 +241,21 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   // ─── Delete Dialog ─────────────────────────────────────
-  void _showDeleteDialog(BuildContext context, GroomingViewModel vm, Booking booking) {
+  void _showDeleteDialog(BuildContext context, GroomingViewModel vm, Booking booking, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Jadwal'),
-        content: const Text('Hapus jadwal ini secara permanen?'),
+        title: Text(l10n.deleteSchedule),
+        content: Text(l10n.deleteScheduleConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () {
               vm.deleteBooking(booking);
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Hapus'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -269,6 +272,7 @@ class BookingCard extends StatelessWidget {
   final String catName;
   final String ownerName;
   final bool isDark;
+  final AppLocalizations l10n;
   final VoidCallback onCheckIn;
   final VoidCallback? onWhatsApp;
   final VoidCallback onConfirm;
@@ -282,6 +286,7 @@ class BookingCard extends StatelessWidget {
     required this.catName,
     required this.ownerName,
     required this.isDark,
+    required this.l10n,
     required this.onCheckIn,
     this.onWhatsApp,
     required this.onConfirm,
@@ -296,6 +301,16 @@ class BookingCard extends StatelessWidget {
       case 'CONFIRMED': return const Color(0xFF64B5F6);
       case 'CANCELLED': return Colors.red;
       default: return Colors.orange;
+    }
+  }
+
+  String _localizeStatus(String status) {
+    switch (status) {
+      case 'SCHEDULED': return l10n.statusScheduled;
+      case 'COMPLETED': return l10n.statusCompleted;
+      case 'CONFIRMED': return l10n.statusConfirmed;
+      case 'CANCELLED': return l10n.statusCancelled;
+      default: return status;
     }
   }
 
@@ -317,7 +332,7 @@ class BookingCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(catName, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                      Text('Owner: $ownerName', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext)),
+                      Text(l10n.ownerLabel(ownerName), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext)),
                     ],
                   ),
                 ),
@@ -329,7 +344,7 @@ class BookingCard extends StatelessWidget {
                         color: _statusColor().withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(booking.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _statusColor())),
+                      child: Text(_localizeStatus(booking.status), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _statusColor())),
                     ),
                     PopupMenuButton<String>(
                       onSelected: (action) {
@@ -341,10 +356,10 @@ class BookingCard extends StatelessWidget {
                         }
                       },
                       itemBuilder: (_) => [
-                        const PopupMenuItem(value: 'confirm', child: ListTile(leading: Icon(Icons.check, color: Colors.blue), title: Text('Konfirmasi'), dense: true, contentPadding: EdgeInsets.zero)),
-                        const PopupMenuItem(value: 'cancel', child: ListTile(leading: Icon(Icons.close, color: Colors.red), title: Text('Batalkan'), dense: true, contentPadding: EdgeInsets.zero)),
-                        const PopupMenuItem(value: 'reschedule', child: ListTile(leading: Icon(Icons.date_range), title: Text('Jadwalkan Ulang'), dense: true, contentPadding: EdgeInsets.zero)),
-                        const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, color: Colors.red), title: Text('Hapus', style: TextStyle(color: Colors.red)), dense: true, contentPadding: EdgeInsets.zero)),
+                        PopupMenuItem(value: 'confirm', child: ListTile(leading: const Icon(Icons.check, color: Colors.blue), title: Text(l10n.confirm), dense: true, contentPadding: EdgeInsets.zero)),
+                        PopupMenuItem(value: 'cancel', child: ListTile(leading: const Icon(Icons.close, color: Colors.red), title: Text(l10n.cancelBooking), dense: true, contentPadding: EdgeInsets.zero)),
+                        PopupMenuItem(value: 'reschedule', child: ListTile(leading: const Icon(Icons.date_range), title: Text(l10n.reschedule), dense: true, contentPadding: EdgeInsets.zero)),
+                        PopupMenuItem(value: 'delete', child: ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: Text(l10n.delete, style: const TextStyle(color: Colors.red)), dense: true, contentPadding: EdgeInsets.zero)),
                       ],
                     ),
                   ],
@@ -352,9 +367,9 @@ class BookingCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text('Tanggal: ${app_date.formatDateTime(booking.bookingDate)}'),
-            Text('Layanan: ${booking.serviceType}'),
-            if (booking.notes.isNotEmpty) Text('Catatan: ${booking.notes}', style: Theme.of(context).textTheme.bodySmall),
+            Text('${l10n.dateLabel}: ${app_date.formatDateTime(booking.bookingDate)}'),
+            Text('${l10n.serviceLabel}: ${booking.serviceType}'),
+            if (booking.notes.isNotEmpty) Text('${l10n.notes}: ${booking.notes}', style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -363,13 +378,13 @@ class BookingCard extends StatelessWidget {
                   IconButton(
                     onPressed: onWhatsApp,
                     icon: const Icon(Icons.phone, color: Colors.green),
-                    tooltip: 'WhatsApp Reminder',
+                    tooltip: l10n.whatsappReminder,
                   ),
                 if (booking.status != 'COMPLETED' && booking.status != 'CANCELLED')
                   FilledButton.icon(
                     onPressed: onCheckIn,
                     icon: const Icon(Icons.check_rounded, size: 18),
-                    label: const Text('Check-In'),
+                    label: Text(l10n.checkIn),
                   ),
               ],
             ),

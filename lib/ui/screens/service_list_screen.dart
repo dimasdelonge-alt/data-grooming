@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../grooming_view_model.dart';
 import '../theme/theme.dart';
@@ -14,19 +15,20 @@ class ServiceListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<GroomingViewModel>();
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final services = vm.services;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Manajemen Layanan')),
+      appBar: AppBar(title: Text(l10n.manageServices)),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showServiceDialog(context, vm),
+        onPressed: () => _showServiceDialog(context, vm, l10n),
         child: const Icon(Icons.add_rounded),
       ),
       body: services.isEmpty
-          ? const EmptyState(
-              message: 'Belum ada layanan.',
-              subMessage: 'Tap tombol + untuk menambah layanan.',
+          ? EmptyState(
+              message: l10n.noServices,
+              subMessage: l10n.tapPlusAddService,
               icon: Icons.spa_rounded,
             )
           : ListView.builder(
@@ -61,12 +63,12 @@ class ServiceListScreen extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          onPressed: () => _showServiceDialog(context, vm, service: svc),
+                          onPressed: () => _showServiceDialog(context, vm, l10n, service: svc),
                           icon: const Icon(Icons.edit_rounded),
                         ),
                         IconButton(
-                          onPressed: () => _showDeleteDialog(context, vm, svc),
-                          icon: Icon(Icons.delete_rounded, color: Colors.redAccent),
+                          onPressed: () => _showDeleteDialog(context, vm, svc, l10n),
+                          icon: const Icon(Icons.delete_rounded, color: Colors.redAccent),
                         ),
                       ],
                     ),
@@ -77,7 +79,7 @@ class ServiceListScreen extends StatelessWidget {
     );
   }
 
-  void _showServiceDialog(BuildContext context, GroomingViewModel vm, {GroomingService? service}) {
+  void _showServiceDialog(BuildContext context, GroomingViewModel vm, AppLocalizations l10n, {GroomingService? service}) {
     final nameController = TextEditingController(text: service?.serviceName ?? '');
     final priceController = TextEditingController(text: service?.defaultPrice.toString() ?? '');
     bool nameError = false;
@@ -88,19 +90,19 @@ class ServiceListScreen extends StatelessWidget {
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setDlgState) {
           return AlertDialog(
-            title: Text(service != null ? 'Edit Layanan' : 'Tambah Layanan'),
+            title: Text(service != null ? l10n.editService : l10n.addService),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: InputDecoration(labelText: 'Nama Layanan', errorText: nameError ? 'Wajib diisi' : null),
+                  decoration: InputDecoration(labelText: l10n.serviceName, errorText: nameError ? l10n.requiredField : null),
                   onChanged: (_) => setDlgState(() => nameError = false),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: priceController,
-                  decoration: InputDecoration(labelText: 'Harga (Rp)', prefixText: 'Rp ', errorText: priceError ? 'Harga tidak valid' : null),
+                  decoration: InputDecoration(labelText: l10n.amountRp, prefixText: 'Rp ', errorText: priceError ? l10n.invalidPrice : null),
                   keyboardType: TextInputType.number,
                   inputFormatters: [CurrencyInputFormatter()],
                   onChanged: (_) => setDlgState(() => priceError = false),
@@ -108,7 +110,7 @@ class ServiceListScreen extends StatelessWidget {
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
               FilledButton(
                 onPressed: () {
                   final name = nameController.text.trim();
@@ -129,7 +131,7 @@ class ServiceListScreen extends StatelessWidget {
                   }
                   Navigator.pop(ctx);
                 },
-                child: const Text('Simpan'),
+                child: Text(l10n.save),
               ),
             ],
           );
@@ -138,21 +140,21 @@ class ServiceListScreen extends StatelessWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, GroomingViewModel vm, GroomingService service) {
+  void _showDeleteDialog(BuildContext context, GroomingViewModel vm, GroomingService service, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Layanan'),
-        content: Text('Hapus "${service.serviceName}" secara permanen?'),
+        title: Text(l10n.deleteService),
+        content: Text(l10n.deleteServiceConfirm(service.serviceName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () {
               vm.deleteService(service);
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Hapus'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

@@ -17,6 +17,7 @@ class SettingsPreferences {
   static const String _keyReminderMinute = 'reminder_minute';
   static const String _keyBookingReminderEnabled = 'booking_reminder_enabled';
   static const String _keyLastNotificationCheck = 'last_notification_check';
+  static const String _keyLanguage = 'language_code';
 
   final SharedPreferences _prefs;
 
@@ -98,4 +99,9 @@ class SettingsPreferences {
 
   int get lastNotificationCheck => _prefs.getInt(_keyLastNotificationCheck) ?? 0;
   set lastNotificationCheck(int value) => _prefs.setInt(_keyLastNotificationCheck, value);
+
+  // ─── Language ──────────────────────────────────────────────────────
+
+  String get language => _prefs.getString(_keyLanguage) ?? 'id';
+  set language(String value) => _prefs.setString(_keyLanguage, value);
 }

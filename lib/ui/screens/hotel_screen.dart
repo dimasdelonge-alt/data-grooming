@@ -13,6 +13,7 @@ import '../../util/pdf_generator.dart';
 import '../common/cat_avatar.dart';
 import '../../util/phone_number_utils.dart';
 import 'package:intl/intl.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 class HotelScreen extends StatefulWidget {
   const HotelScreen({super.key});
@@ -40,35 +41,36 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final hotelVm = context.watch<HotelViewModel>();
     final groomingVm = context.watch<GroomingViewModel>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hotel Kucing'),
+        title: Text(l10n.hotelKucing),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Status Kamar'),
-            Tab(text: 'Biaya'),
-            Tab(text: 'Riwayat'),
+          tabs: [
+            Tab(text: l10n.roomStatus),
+            Tab(text: l10n.billing),
+            Tab(text: l10n.history),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showRoomDialog(context, hotelVm),
+        onPressed: () => _showRoomDialog(context, hotelVm, l10n),
         child: const Icon(Icons.add_rounded),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildRoomStatusTab(context, hotelVm, groomingVm),
-          _buildBillingTab(context, hotelVm),
-          _buildHistoryTab(context, hotelVm),
+          _buildRoomStatusTab(context, hotelVm, groomingVm, l10n),
+          _buildBillingTab(context, hotelVm, l10n),
+          _buildHistoryTab(context, hotelVm, l10n),
         ],
       ),
     );
   }
 
-  Widget _buildRoomStatusTab(BuildContext context, HotelViewModel hotelVm, GroomingViewModel groomingVm) {
+  Widget _buildRoomStatusTab(BuildContext context, HotelViewModel hotelVm, GroomingViewModel groomingVm, AppLocalizations l10n) {
     if (hotelVm.rooms.isEmpty) {
       return Center(
         child: Column(
@@ -76,7 +78,7 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
           children: [
             const Icon(Icons.bedroom_child_rounded, size: 64, color: Colors.grey),
             const SizedBox(height: 12),
-            Text('Belum ada kamar.', style: TextStyle(color: Colors.grey[600])),
+            Text(l10n.noRooms, style: TextStyle(color: Colors.grey[600])),
           ],
         ),
       );
@@ -126,26 +128,27 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
           isDark: isDark,
           isLocked: isLocked,
           isOverdue: isOverdue,
+          l10n: l10n,
           onTap: () {
             if (isLocked) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Kamar ini terkunci (Limit Starter 2). Silakan upgrade ke PRO!')),
+                SnackBar(content: Text(l10n.roomLockedStarterLimit)),
               );
               return;
             }
             if (activeBooking != null) {
-              _showEditBookingDatesDialog(context, hotelVm, activeBooking, cat);
+              _showEditBookingDatesDialog(context, hotelVm, activeBooking, cat, l10n);
             } else {
               Navigator.pushNamed(context, '/room_detail', arguments: room.id);
             }
           },
-          onLongPress: () => _showRoomDialog(context, hotelVm, room: room),
+          onLongPress: () => _showRoomDialog(context, hotelVm, l10n, room: room),
         );
       },
     );
   }
 
-  void _showEditBookingDatesDialog(BuildContext context, HotelViewModel vm, HotelBooking booking, Cat? cat) {
+  void _showEditBookingDatesDialog(BuildContext context, HotelViewModel vm, HotelBooking booking, Cat? cat, AppLocalizations l10n) {
     if (cat == null) return;
     final checkIn = DateTime.fromMillisecondsSinceEpoch(booking.checkInDate);
     final checkOut = DateTime.fromMillisecondsSinceEpoch(booking.checkOutDate > 0 ? booking.checkOutDate : DateTime.now().add(const Duration(days: 1)).millisecondsSinceEpoch);
@@ -158,12 +161,12 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: Text('Edit Booking: ${cat.catName}'),
+            title: Text(l10n.editBookingFor(cat.catName)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  title: const Text('Tanggal Masuk'),
+                  title: Text(l10n.checkInDate),
                   subtitle: Text(DateFormat('dd MMM yyyy').format(newCheckIn)),
                   trailing: const Icon(Icons.calendar_today),
                   onTap: () async {
@@ -183,7 +186,7 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
                   },
                 ),
                 ListTile(
-                  title: const Text('Tanggal Keluar'),
+                  title: Text(l10n.checkOutDate),
                   subtitle: Text(DateFormat('dd MMM yyyy').format(newCheckOut)),
                   trailing: const Icon(Icons.event_busy),
                   onTap: () async {
@@ -203,17 +206,17 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.delete, color: Colors.red),
-                    label: const Text('Hapus Booking', style: TextStyle(color: Colors.red)),
+                    label: Text(l10n.deleteBooking, style: const TextStyle(color: Colors.red)),
                     style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red)),
                     onPressed: () {
                       // Confirm delete
                       showDialog(
                         context: context,
                         builder: (confirmCtx) => AlertDialog(
-                          title: const Text('Hapus Booking?'),
-                          content: const Text('Tindakan ini tidak dapat dibatalkan.'),
+                          title: Text(l10n.deleteBookingConfirmTitle),
+                          content: Text(l10n.deleteBookingConfirmDesc),
                           actions: [
-                            TextButton(onPressed: () => Navigator.pop(confirmCtx), child: const Text('Batal')),
+                            TextButton(onPressed: () => Navigator.pop(confirmCtx), child: Text(l10n.cancel)),
                             FilledButton(
                               style: FilledButton.styleFrom(backgroundColor: Colors.red),
                               onPressed: () {
@@ -221,7 +224,7 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
                                 Navigator.pop(confirmCtx); // Close confirm
                                 Navigator.pop(ctx); // Close edit dialog
                               },
-                              child: const Text('Hapus'),
+                              child: Text(l10n.delete),
                             ),
                           ],
                         ),
@@ -232,13 +235,13 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
               OutlinedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
                   _tabController.animateTo(1); // Switch to Billing tab
                 },
-                child: const Text('Lihat Tagihan'),
+                child: Text(l10n.viewBilling),
               ),
               FilledButton(
                 onPressed: () {
@@ -250,7 +253,7 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
                   );
                   Navigator.pop(ctx);
                 },
-                child: const Text('Simpan'),
+                child: Text(l10n.save),
               ),
             ],
           );
@@ -263,14 +266,14 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
       return a.isBefore(b) || a.isAtSameMomentAs(b);
   }
 
-  Widget _buildBillingTab(BuildContext context, HotelViewModel vm) {
+  Widget _buildBillingTab(BuildContext context, HotelViewModel vm, AppLocalizations l10n) {
     if (vm.activeBookings.isEmpty) {
-      return const Center(child: Text('Tidak ada tagihan aktif.'));
+      return Center(child: Text(l10n.noActiveBilling));
     }
     
     final groups = vm.billingGroups;
     if (groups.isEmpty) {
-       return const Center(child: Text('Tidak ada tagihan.'));
+       return Center(child: Text(l10n.noBilling));
     }
 
     return ListView.separated(
@@ -278,15 +281,15 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
       itemCount: groups.length,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-        return _BillingGroupCard(group: groups[index], vm: vm);
+        return _BillingGroupCard(group: groups[index], vm: vm, l10n: l10n);
       },
     );
   }
 
-  Widget _buildHistoryTab(BuildContext context, HotelViewModel vm) {
+  Widget _buildHistoryTab(BuildContext context, HotelViewModel vm, AppLocalizations l10n) {
     final groups = vm.historyGroups; // Sorted flat list
     if (groups.isEmpty) {
-      return const Center(child: Text('Belum ada riwayat.'));
+      return Center(child: Text(l10n.noHistory));
     }
 
     return ListView.builder(
@@ -305,14 +308,14 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
           margin: const EdgeInsets.only(bottom: 12),
           child: ExpansionTile(
             title: Text(group.ownerName, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('$dateStr - $catCount Kucing'),
+            subtitle: Text('$dateStr - ${l10n.countCats(catCount)}'),
             children: [
                Padding(
                  padding: const EdgeInsets.all(16),
                  child: _BillingGroupCard(
-                   group: group, vm: vm, isHistory: true, hideHeader: true,
+                   group: group, vm: vm, l10n: l10n, isHistory: true, hideHeader: true,
                    onBookingTap: (booking, cat) {
-                     _showEditBookingDatesDialog(context, vm, booking, cat);
+                     _showEditBookingDatesDialog(context, vm, booking, cat, l10n);
                    },
                  ),
                ),
@@ -323,7 +326,7 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
     );
   }
 
-  void _showRoomDialog(BuildContext context, HotelViewModel vm, {HotelRoom? room}) {
+  void _showRoomDialog(BuildContext context, HotelViewModel vm, AppLocalizations l10n, {HotelRoom? room}) {
     final nameController = TextEditingController(text: room?.name ?? '');
     final priceText = room != null ? NumberFormat.decimalPattern('id').format(room.pricePerNight) : '';
     final priceController = TextEditingController(text: priceText);
@@ -333,32 +336,32 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(room == null ? 'Tambah Kamar' : 'Edit Kamar'),
+        title: Text(room == null ? l10n.addRoom : l10n.editRoom),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Nama Kamar')),
+              TextField(controller: nameController, decoration: InputDecoration(labelText: l10n.roomName)),
               const SizedBox(height: 12),
               TextField(
                 controller: priceController,
-                decoration: const InputDecoration(labelText: 'Harga per Malam', prefixText: 'Rp '),
+                decoration: InputDecoration(labelText: l10n.pricePerNight, prefixText: 'Rp '),
                 keyboardType: TextInputType.number,
                 inputFormatters: [CurrencyInputFormatter()],
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: capController,
-                decoration: const InputDecoration(labelText: 'Kapasitas'),
+                decoration: InputDecoration(labelText: l10n.capacity),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 12),
-              TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Catatan')),
+              TextField(controller: notesController, decoration: InputDecoration(labelText: l10n.notes)),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () {
               final name = nameController.text.trim();
@@ -379,7 +382,7 @@ class _HotelScreenState extends State<HotelScreen> with SingleTickerProviderStat
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Simpan'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -407,7 +410,10 @@ class _RoomCard extends StatelessWidget {
     this.isOverdue = false,
     required this.onTap,
     required this.onLongPress,
+    required this.l10n,
   });
+
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -420,15 +426,15 @@ class _RoomCard extends StatelessWidget {
     if (isOverdue) {
       color = Colors.deepOrange;
       bgColor = isDark ? Colors.deepOrange.withOpacity(0.2) : Colors.deepOrange.withOpacity(0.1);
-      statusText = 'OVERDUE!';
+      statusText = l10n.overdue;
     } else if (isOccupied) {
       color = Colors.redAccent;
       bgColor = isDark ? Colors.red.withOpacity(0.15) : Colors.red.withOpacity(0.1);
-      statusText = cat?.catName ?? 'Terisi';
+      statusText = cat?.catName ?? l10n.occupied;
     } else {
       color = Colors.green;
       bgColor = isDark ? Colors.green.withOpacity(0.15) : Colors.green.withOpacity(0.1);
-      statusText = 'Kosong';
+      statusText = l10n.available;
     }
 
     return Opacity(
@@ -467,7 +473,7 @@ class _RoomCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  isLocked ? 'Terkunci' : statusText,
+                  isLocked ? l10n.locked : statusText,
                   style: TextStyle(
                     color: isOverdue ? Colors.deepOrange : color,
                     fontWeight: isOverdue ? FontWeight.w900 : FontWeight.bold,
@@ -507,7 +513,9 @@ class _BillingGroupCard extends StatelessWidget {
   final bool hideHeader;
   final void Function(HotelBooking booking, Cat? cat)? onBookingTap;
 
-  const _BillingGroupCard({required this.group, required this.vm, this.isHistory = false, this.hideHeader = false, this.onBookingTap});
+  const _BillingGroupCard({required this.group, required this.vm, required this.l10n, this.isHistory = false, this.hideHeader = false, this.onBookingTap});
+
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -533,7 +541,7 @@ class _BillingGroupCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(group.ownerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text('${group.bookings.length} Kamar/Kucing', style: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12)),
+                        Text(l10n.countCats(group.bookings.length), style: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -548,7 +556,7 @@ class _BillingGroupCard extends StatelessWidget {
                           color: isPaid ? Colors.green : Colors.redAccent,
                         ),
                       ),
-                      Text(isPaid ? 'Lunas / Lebih Bayar' : 'Sisa Tagihan', style: const TextStyle(fontSize: 10)),
+                      Text(isPaid ? l10n.paid : l10n.remainingBilling, style: const TextStyle(fontSize: 10)),
                     ],
                   ),
                 ],
@@ -585,11 +593,11 @@ class _BillingGroupCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                          Text(
-                           '${DateFormat('dd MMM').format(checkIn)} - ${isHistory ? DateFormat('dd MMM').format(checkOut) : 'Sekarang'}',
+                           '${DateFormat('dd MMM').format(checkIn)} - ${isHistory ? DateFormat('dd MMM').format(checkOut) : l10n.now}',
                            style: const TextStyle(fontSize: 11, color: Colors.grey),
                          ),
                          if (!isHistory)
-                            Text('Running...', style: const TextStyle(fontSize: 10, color: Colors.green, fontStyle: FontStyle.italic)),
+                            Text(l10n.running, style: const TextStyle(fontSize: 10, color: Colors.green, fontStyle: FontStyle.italic)),
                          if (isHistory && onBookingTap != null)
                             Icon(Icons.edit_outlined, size: 14, color: Colors.grey[400]),
                       ],
@@ -612,7 +620,7 @@ class _BillingGroupCard extends StatelessWidget {
             
             // Add-Ons Section ------------------------------------------------
             if (group.addOns.isNotEmpty) ...[
-               const Text('Biaya Tambahan', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.purpleAccent, fontSize: 12)),
+               Text(l10n.addOnCosts, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purpleAccent, fontSize: 12)),
                const SizedBox(height: 4),
                ...group.addOns.map((addon) => Padding(
                  padding: const EdgeInsets.only(bottom: 4),
@@ -639,11 +647,11 @@ class _BillingGroupCard extends StatelessWidget {
                         side: const BorderSide(color: Colors.white24),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                      ),
-                     child: const Row(
+                     child: Row(
                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                        children: [
-                         Text('Kelola Add-on'),
-                         Icon(Icons.add, size: 16),
+                         Text(l10n.manageAddOns),
+                         const Icon(Icons.add, size: 16),
                        ],
                      ),
                    ),
@@ -656,9 +664,9 @@ class _BillingGroupCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Down Payment (DP):'),
+                Text(l10n.downPayment),
                 InkWell(
-              onTap: () => _showEditDpDialog(context, vm, group),
+              onTap: () => _showEditDpDialog(context, vm, group, l10n),
                   child: Row(
                     children: [
                       Text(app_date.formatCurrencyDouble(group.totalDp)),
@@ -677,7 +685,7 @@ class _BillingGroupCard extends StatelessWidget {
                Row(
                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                  children: [
-                   const Text('Total Biaya (Est):', style: TextStyle(fontWeight: FontWeight.bold)),
+                   Text(l10n.totalCostEst, style: const TextStyle(fontWeight: FontWeight.bold)),
                    Text(app_date.formatCurrencyDouble(group.totalCost), style: const TextStyle(fontWeight: FontWeight.bold)),
                  ],
                ),
@@ -690,7 +698,7 @@ class _BillingGroupCard extends StatelessWidget {
                    Expanded(
                      child: OutlinedButton.icon(
                        icon: const Icon(Icons.print, size: 16),
-                       label: const Text('Invoice DP', style: TextStyle(fontSize: 12)),
+                       label: Text(l10n.invoiceDp, style: const TextStyle(fontSize: 12)),
                        style: OutlinedButton.styleFrom(
                          padding: const EdgeInsets.symmetric(vertical: 12),
                        ),
@@ -712,8 +720,8 @@ class _BillingGroupCard extends StatelessWidget {
                      flex: 2,
                      child: FilledButton.icon(
                        icon: const Icon(Icons.check_circle_outline),
-                       onPressed: () => _showCheckoutGroupDialog(context, vm, group),
-                       label: const Text('Check Out'),
+                       onPressed: () => _showCheckoutGroupDialog(context, vm, group, l10n),
+                       label: Text(l10n.checkOut),
                        style: FilledButton.styleFrom(
                          padding: const EdgeInsets.symmetric(vertical: 12),
                        ),
@@ -727,7 +735,7 @@ class _BillingGroupCard extends StatelessWidget {
                  width: double.infinity,
                  child: OutlinedButton.icon(
                    icon: const Icon(Icons.print),
-                   label: const Text('Cetak Invoice'),
+                   label: Text(l10n.printInvoice),
                    onPressed: () {
                      final groomingVm = context.read<GroomingViewModel>();
                       PdfGenerator.printHotelInvoice(
@@ -757,19 +765,19 @@ class _BillingGroupCard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const ListTile(title: Text('Kelola Add-on', style: TextStyle(fontWeight: FontWeight.bold))),
+              ListTile(title: Text(l10n.manageAddOns, style: const TextStyle(fontWeight: FontWeight.bold))),
               
               // Add Item Form
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _AddOnForm(vm: vm, bookings: group.bookings, groupCats: group.cats),
+                child: _AddOnForm(vm: vm, bookings: group.bookings, groupCats: group.cats, l10n: l10n),
               ),
               const Divider(),
               // List Existing
               if (group.addOns.isEmpty) 
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('Belum ada item tambahan.'),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(l10n.noAddOns),
                 )
               else
                 Flexible(
@@ -780,7 +788,7 @@ class _BillingGroupCard extends StatelessWidget {
                       final addon = group.addOns[index];
                       // Find which cat/booking this belongs to
                       final bookingIndex = group.bookings.indexWhere((b) => b.id == addon.bookingId);
-                      final catName = bookingIndex != -1 ? group.cats[bookingIndex].catName : 'Unknown';
+                      final catName = bookingIndex != -1 ? group.cats[bookingIndex].catName : l10n.unknown;
                       
                       return ListTile(
                         dense: true,
@@ -807,7 +815,7 @@ class _BillingGroupCard extends StatelessWidget {
       );
   }
 
-  void _showEditDpDialog(BuildContext context, HotelViewModel vm, BillingGroup group) {
+  void _showEditDpDialog(BuildContext context, HotelViewModel vm, BillingGroup group, AppLocalizations l10n) {
      final initialText = group.totalDp > 0 ? NumberFormat.decimalPattern('id').format(group.totalDp) : '';
      final controller = TextEditingController(text: initialText);
      
@@ -818,22 +826,22 @@ class _BillingGroupCard extends StatelessWidget {
      showDialog(
        context: context,
        builder: (ctx) => AlertDialog(
-         title: const Text('Update Total DP'),
+         title: Text(l10n.updateTotalDp),
          content: Column(
            mainAxisSize: MainAxisSize.min,
            children: [
-             const Text('DP ini akan dibagi rata ke semua booking dalam grup ini.'),
+             Text(l10n.dpDistributeDesc),
              const SizedBox(height: 12),
              TextField(
                controller: controller,
                keyboardType: TextInputType.number,
                inputFormatters: [CurrencyInputFormatter()],
-               decoration: const InputDecoration(labelText: 'Total DP', prefixText: 'Rp '),
+               decoration: InputDecoration(labelText: l10n.totalDp, prefixText: 'Rp '),
              ),
            ],
          ),
          actions: [
-           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
            FilledButton(
              onPressed: () {
                final raw = controller.text.replaceAll('.', '');
@@ -852,14 +860,14 @@ class _BillingGroupCard extends StatelessWidget {
                   Navigator.pop(ctx);
                }
              },
-             child: const Text('Simpan'),
+             child: Text(l10n.save),
            ),
          ],
        ),
      );
   }
 
-  void _showCheckoutGroupDialog(BuildContext context, HotelViewModel vm, BillingGroup group) {
+  void _showCheckoutGroupDialog(BuildContext context, HotelViewModel vm, BillingGroup group, AppLocalizations l10n) {
     final finVm = context.read<FinancialViewModel>();
     final normalizedPhone = PhoneNumberUtils.normalize(group.ownerPhone);
     final ownerDeposit = finVm.deposits.where((d) => 
@@ -873,13 +881,13 @@ class _BillingGroupCard extends StatelessWidget {
         builder: (ctx, setDialogState) {
           final remaining = group.remaining;
           return AlertDialog(
-            title: const Text('Konfirmasi Check Out'),
+            title: Text(l10n.confirmCheckout),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Selesaikan ${group.bookings.length} booking untuk ${group.ownerName}?'),
-                Text('Total: ${app_date.formatCurrencyDouble(remaining)}',
+                Text(l10n.checkoutConfirmDesc(group.bookings.length, group.ownerName)),
+                Text('${l10n.totalLabel}: ${app_date.formatCurrencyDouble(remaining)}',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 if (ownerDeposit != null && remaining > 0) ...[
                   const SizedBox(height: 12),
@@ -897,20 +905,20 @@ class _BillingGroupCard extends StatelessWidget {
                     ),
                     child: CheckboxListTile(
                       value: useDeposit,
-                      onChanged: ownerDeposit.balance > 0
+                       onChanged: ownerDeposit.balance > 0
                           ? (val) => setDialogState(() => useDeposit = val ?? false)
                           : null,
-                      title: const Text('Bayar dari Deposit', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      title: Text(l10n.payFromDeposit, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Saldo: ${app_date.formatCurrencyDouble(ownerDeposit.balance)}',
+                          Text(l10n.balanceStr(app_date.formatCurrencyDouble(ownerDeposit.balance)),
                               style: TextStyle(
                                 color: ownerDeposit.balance >= remaining ? Colors.green : Colors.orange,
                                 fontWeight: FontWeight.bold,
                               )),
                           if (ownerDeposit.balance < remaining && ownerDeposit.balance > 0)
-                            Text('Saldo kurang, akan dipotong ${app_date.formatCurrencyDouble(ownerDeposit.balance)}',
+                            Text(l10n.balanceNotEnoughDeduct(app_date.formatCurrencyDouble(ownerDeposit.balance)),
                                 style: const TextStyle(fontSize: 11, color: Colors.orange)),
                         ],
                       ),
@@ -923,7 +931,7 @@ class _BillingGroupCard extends StatelessWidget {
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
               FilledButton(
                 onPressed: () async {
                   // Deduct deposit if applicable
@@ -966,7 +974,7 @@ class _BillingGroupCard extends StatelessWidget {
                     depositDeducted: actualDeducted,
                   );
                 },
-                child: const Text('Check Out'),
+                child: Text(l10n.checkOut),
               ),
             ],
           );
@@ -980,8 +988,9 @@ class _AddOnForm extends StatefulWidget {
   final HotelViewModel vm;
   final List<HotelBooking> bookings;
   final List<Cat> groupCats;
+  final AppLocalizations l10n;
 
-  const _AddOnForm({required this.vm, required this.bookings, required this.groupCats});
+  const _AddOnForm({required this.vm, required this.bookings, required this.groupCats, required this.l10n});
 
   @override
   State<_AddOnForm> createState() => _AddOnFormState();
@@ -1005,8 +1014,8 @@ class _AddOnFormState extends State<_AddOnForm> {
     return Column(
       children: [
         DropdownButtonFormField<HotelBooking>(
-          initialValue: _selectedBooking,
-          decoration: const InputDecoration(labelText: 'Pilih Kucing/Kamar'),
+          value: _selectedBooking,
+          decoration: InputDecoration(labelText: widget.l10n.selectCatRoom),
           items: widget.bookings.asMap().entries.map((entry) {
             final idx = entry.key;
             final booking = entry.value;
@@ -1019,11 +1028,11 @@ class _AddOnFormState extends State<_AddOnForm> {
           onChanged: (val) => setState(() => _selectedBooking = val),
         ),
         const SizedBox(height: 8),
-        TextField(controller: _itemController, decoration: const InputDecoration(labelText: 'Nama Item (Contoh: Whiskas)')),
+        TextField(controller: _itemController, decoration: InputDecoration(labelText: widget.l10n.itemNameExample)),
         const SizedBox(height: 8),
         TextField(
           controller: _priceController,
-          decoration: const InputDecoration(labelText: 'Harga', prefixText: 'Rp '),
+          decoration: InputDecoration(labelText: widget.l10n.price, prefixText: 'Rp '),
           keyboardType: TextInputType.number,
           inputFormatters: [CurrencyInputFormatter()],
         ),
@@ -1050,12 +1059,10 @@ class _AddOnFormState extends State<_AddOnForm> {
                  Navigator.pop(context);
               }
             },
-            child: const Text('Tambah Item'),
+            child: Text(widget.l10n.addItem),
           ),
         ),
       ],
     );
   }
 }
-
-

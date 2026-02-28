@@ -1,4 +1,3 @@
-import 'dart:js_interop';
 import 'package:web/web.dart' as web;
 
 /// Web implementation: generates a deterministic fingerprint from browser properties.

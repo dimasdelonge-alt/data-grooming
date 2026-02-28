@@ -8,6 +8,7 @@ import '../../data/entity/session.dart';
 import '../../util/date_utils.dart' as app_date;
 import 'package:share_plus/share_plus.dart';
 import '../../data/entity/hotel_entities.dart';
+import 'package:datagrooming_v3/l10n/app_localizations.dart';
 
 class CatDetailScreen extends StatefulWidget {
   final int catId;
@@ -50,19 +51,20 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
   }
 
   Future<void> _confirmArchive(BuildContext context, Cat cat) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Arsipkan Kucing?'),
-        content: Text('"${cat.catName}" memiliki riwayat transaksi dan tidak bisa dihapus. Dengan mengarsipkan, data keuangan tetap aman namun kucing tidak akan muncul lagi di daftar dan pengingat.'),
+        title: Text(l10n.archiveCatPrompt),
+        content: Text(l10n.archiveCatDesc(cat.catName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Arsipkan'),
+            child: Text(l10n.archive),
           ),
         ],
       ),
@@ -74,26 +76,27 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${cat.catName} telah diarsipkan')),
+          SnackBar(content: Text(l10n.catArchivedSuccess(cat.catName))),
         );
       }
     }
   }
 
   Future<void> _confirmUnarchive(BuildContext context, Cat cat) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Aktifkan Kembali?'),
-        content: Text('Apakah Anda ingin memulihkan "${cat.catName}"? Kucing ini akan muncul kembali di daftar aktif.'),
+        title: Text(l10n.unarchiveCatPrompt),
+        content: Text(l10n.unarchiveCatDesc(cat.catName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Aktifkan'),
+            child: Text(l10n.unarchive),
           ),
         ],
       ),
@@ -108,15 +111,16 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
         );
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${cat.catName} telah diaktifkan kembali')),
+        SnackBar(content: Text(l10n.catUnarchivedSuccess(cat.catName))),
       );
     }
   }
 
   Future<void> _confirmDelete(BuildContext context, Cat cat) async {
+    final l10n = AppLocalizations.of(context)!;
     if (_sessions.isNotEmpty || _hotelBookings.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hapus gagal: Kucing ini memiliki riwayat. Gunakan fitur Arsip.')),
+        SnackBar(content: Text(l10n.deleteFailedHasHistory)),
       );
       return;
     }
@@ -124,17 +128,17 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Kucing?'),
-        content: Text('Apakah Anda yakin ingin menghapus "${cat.catName}"? Semua riwayat grooming juga akan dihapus.'),
+        title: Text(l10n.deleteCatPrompt),
+        content: Text(l10n.deleteCatDesc(cat.catName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Hapus'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -147,7 +151,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
         final messenger = ScaffoldMessenger.of(context);
         Navigator.pop(context);
         messenger.showSnackBar(
-          SnackBar(content: Text('${cat.catName} telah dihapus')),
+          SnackBar(content: Text(l10n.catDeletedSuccess(cat.catName))),
         );
       }
     }
@@ -156,6 +160,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     if (_isLoading) {
       return Scaffold(
@@ -167,7 +172,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
     if (_cat == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Kucing tidak ditemukan.')),
+        body: Center(child: Text(l10n.catNotFound)),
       );
     }
 
@@ -186,20 +191,20 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
                 IconButton(
                   onPressed: () => _confirmUnarchive(context, cat),
                   icon: const Icon(Icons.settings_backup_restore_rounded, color: Colors.white),
-                  tooltip: 'Aktifkan Kembali',
+                  tooltip: l10n.unarchiveCatPrompt,
                 )
               else ...[
                 if (_sessions.isNotEmpty || _hotelBookings.isNotEmpty)
                   IconButton(
                     onPressed: () => _confirmArchive(context, cat),
                     icon: const Icon(Icons.archive_outlined, color: Colors.white),
-                    tooltip: 'Arsipkan',
+                    tooltip: l10n.archive,
                   )
                 else
                   IconButton(
                     onPressed: () => _confirmDelete(context, cat),
                     icon: const Icon(Icons.delete_outline_rounded, color: Colors.white),
-                    tooltip: 'Hapus',
+                    tooltip: l10n.delete,
                   ),
               ],
               IconButton(
@@ -238,7 +243,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${cat.breed} • ${cat.gender}',
+                        '${cat.breed} • ${_getGenderLabel(cat.gender, l10n)}',
                         style: const TextStyle(fontSize: 14, color: Colors.white70),
                       ),
                     ],
@@ -278,7 +283,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: _buildInfoCard(cat, isDark),
+              child: _buildInfoCard(cat, isDark, l10n),
             ),
           ),
 
@@ -286,7 +291,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: _buildLoyaltyTracker(context, isDark),
+              child: _buildLoyaltyTracker(context, isDark, l10n),
             ),
           ),
 
@@ -295,17 +300,17 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                'Riwayat Grooming (${_sessions.length})',
+                l10n.groomingHistoryCount(_sessions.length),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
           ),
 
           if (_sessions.isEmpty)
-            const SliverToBoxAdapter(
+             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                child: Center(child: Text('Belum ada riwayat grooming.')),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                child: Center(child: Text(l10n.noGroomingHistoryYet)),
               ),
             )
           else
@@ -319,6 +324,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
                       session: session,
                       cat: cat,
                       isDark: isDark,
+                      l10n: l10n,
                     ),
                   );
                 },
@@ -336,7 +342,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
   // INFO CARD
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildInfoCard(Cat cat, bool isDark) {
+  Widget _buildInfoCard(Cat cat, bool isDark, AppLocalizations l10n) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
@@ -345,7 +351,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Informasi',
+              l10n.information,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
@@ -353,15 +359,15 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
               ),
             ),
             const Divider(height: 20),
-            _infoRow(Icons.person_rounded, 'Pemilik', cat.ownerName, isDark),
-            _infoRow(Icons.phone_rounded, 'Telepon', cat.ownerPhone, isDark),
-            _infoRow(Icons.palette_rounded, 'Warna Bulu', cat.furColor.isEmpty ? '-' : cat.furColor, isDark),
-            _infoRow(Icons.visibility_rounded, 'Warna Mata', cat.eyeColor.isEmpty ? '-' : cat.eyeColor, isDark),
-            _infoRow(Icons.monitor_weight_rounded, 'Berat', cat.weight > 0 ? '${cat.weight} kg' : '-', isDark),
+            _infoRow(Icons.person_rounded, l10n.owner, cat.ownerName, isDark),
+            _infoRow(Icons.phone_rounded, l10n.phone, cat.ownerPhone, isDark),
+            _infoRow(Icons.palette_rounded, l10n.furColor, cat.furColor.isEmpty ? '-' : cat.furColor, isDark),
+            _infoRow(Icons.visibility_rounded, l10n.eyeColor, cat.eyeColor.isEmpty ? '-' : cat.eyeColor, isDark),
+            _infoRow(Icons.monitor_weight_rounded, l10n.weight, cat.weight > 0 ? '${cat.weight} kg' : '-', isDark),
             _infoRow(
               Icons.medical_services_rounded,
-              'Steril',
-              cat.isSterile ? 'Sudah Steril' : 'Belum Steril',
+              l10n.sterile,
+              cat.isSterile ? l10n.isSterileYes : l10n.isSterileNo,
               isDark,
               valueColor: cat.isSterile ? const Color(0xFF66BB6A) : Colors.grey,
             ),
@@ -408,7 +414,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
   // LOYALTY TRACKER
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildLoyaltyTracker(BuildContext context, bool isDark) {
+  Widget _buildLoyaltyTracker(BuildContext context, bool isDark, AppLocalizations l10n) {
     final totalVisits = _sessions.length;
     final progress = (totalVisits > 0 && totalVisits % 10 == 0) ? 10 : totalVisits % 10;
 
@@ -426,7 +432,7 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Loyalty Tracker',
+                  l10n.loyaltyTracker,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -465,14 +471,14 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
                   color: const Color(0xFF66BB6A).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.celebration_rounded, color: Color(0xFF66BB6A), size: 20),
-                    SizedBox(width: 8),
+                    const Icon(Icons.celebration_rounded, color: Color(0xFF66BB6A), size: 20),
+                    const SizedBox(width: 8),
                     Text(
-                      'Loyalty Completed! 🎉',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF66BB6A)),
+                      l10n.loyaltyCompleted,
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF66BB6A)),
                     ),
                   ],
                 ),
@@ -482,6 +488,12 @@ class _CatDetailScreenState extends State<CatDetailScreen> {
         ),
       ),
     );
+  }
+
+  String _getGenderLabel(String gender, AppLocalizations l10n) {
+    if (gender.toLowerCase() == 'male') return l10n.male;
+    if (gender.toLowerCase() == 'female') return l10n.female;
+    return gender;
   }
 }
 
@@ -493,11 +505,13 @@ class _SessionHistoryCard extends StatelessWidget {
   final Session session;
   final Cat cat;
   final bool isDark;
+  final AppLocalizations l10n;
 
   const _SessionHistoryCard({
     required this.session,
     required this.cat,
     required this.isDark,
+    required this.l10n,
   });
 
   @override
@@ -561,11 +575,12 @@ class _SessionHistoryCard extends StatelessWidget {
               // Share button — matching V2
               IconButton(
                 onPressed: () {
-                  final text = 'Grooming Report\n'
-                      'Kucing: ${cat.catName}\n'
-                      'Tanggal: ${app_date.formatDate(session.timestamp)}\n'
-                      'Biaya: ${app_date.formatCurrencyDouble(session.totalCost.toDouble())}\n'
-                      'Catatan: ${session.groomerNotes}';
+                  final text = l10n.groomingReportShare(
+                      cat.catName,
+                      app_date.formatDate(session.timestamp),
+                      app_date.formatCurrencyDouble(session.totalCost.toDouble()),
+                      session.groomerNotes
+                  );
                   Share.share(text);
                 },
                 icon: Icon(

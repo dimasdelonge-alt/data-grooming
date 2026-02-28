@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import '../data/repository/grooming_repository.dart';
 import '../data/repository/firebase_repository.dart';
 import '../data/entity/cat.dart';
@@ -128,6 +130,7 @@ class GroomingViewModel extends ChangeNotifier {
   int get reminderHour => _settingsPrefs.reminderHour;
   int get reminderMinute => _settingsPrefs.reminderMinute;
   int get lastNotificationCheck => _settingsPrefs.lastNotificationCheck;
+  String get currentLanguage => _settingsPrefs.language;
 
   void markNotificationsAsRead() {
     _settingsPrefs.lastNotificationCheck = DateTime.now().millisecondsSinceEpoch;
@@ -179,22 +182,64 @@ class GroomingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setLanguage(String langCode) {
+    _settingsPrefs.language = langCode;
+    notifyListeners();
+  }
+
   Future<bool> connectShop(String shopId, String secretKey) async {
     _isLoading = true;
     notifyListeners();
     try {
       final validKey = await _firebaseRepo.getSecretKey(shopId);
-      if (validKey != null && validKey == secretKey) {
-        _settingsPrefs.storeId = shopId;
-        _settingsPrefs.syncSecretKey = secretKey;
-        _settingsPrefs.isCloudSyncEnabled = true;
-        notifyListeners();
-        return true;
+      if (validKey != null) {
+        // Dual check: SHA-256 hash first, then plain-text fallback for old keys
+        final hashedInput = sha256.convert(utf8.encode(secretKey)).toString();
+        final isMatch = (validKey == hashedInput) || (validKey == secretKey);
+        if (isMatch) {
+          _settingsPrefs.storeId = shopId;
+          _settingsPrefs.syncSecretKey = validKey;
+          _settingsPrefs.isCloudSyncEnabled = true;
+          notifyListeners();
+          return true;
+        }
       }
       return false;
     } catch (e) {
       debugPrint('connectShop error: $e');
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Change password: verify old password, hash new password, update Firebase.
+  /// Returns: 'success', 'wrong_old', or 'error'.
+  Future<String> changePassword(String oldPassword, String newPassword) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final shopId = _settingsPrefs.storeId;
+      if (shopId.isEmpty) return 'error';
+
+      // Verify old password
+      final storedKey = await _firebaseRepo.getSecretKey(shopId);
+      if (storedKey == null) return 'error';
+
+      final hashedOld = sha256.convert(utf8.encode(oldPassword)).toString();
+      final oldMatch = (storedKey == hashedOld) || (storedKey == oldPassword);
+      if (!oldMatch) return 'wrong_old';
+
+      // Hash new password and update Firebase
+      final hashedNew = sha256.convert(utf8.encode(newPassword)).toString();
+      await _firebaseRepo.setSecretKey(shopId, hashedNew);
+      _settingsPrefs.syncSecretKey = hashedNew;
+      notifyListeners();
+      return 'success';
+    } catch (e) {
+      debugPrint('changePassword error: $e');
+      return 'error';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -489,7 +534,7 @@ class GroomingViewModel extends ChangeNotifier {
           orElse: () => const Cat(catName: 'Kucing', ownerName: '', ownerPhone: '')
         );
         await notifService.scheduleReminder(
-          id: booking.bookingId ?? booking.hashCode,
+          id: booking.bookingId,
           title: 'Pengingat Grooming Besok!',
           body: 'Jadwal Grooming untuk ${cat.catName} besok. Jangan lupa ya!',
           scheduledTime: scheduleDate,

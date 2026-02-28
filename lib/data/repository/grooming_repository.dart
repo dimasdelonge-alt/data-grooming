@@ -15,7 +15,6 @@ import '../../util/offline_backup_manager.dart';
 import '../../util/image_utils.dart';
 import 'firebase_repository.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
 import '../source/database_helper.dart';
@@ -303,9 +302,7 @@ class GroomingRepository {
     final txns = await _dao.getDepositTransactions(phone).first;
     await _dao.deleteDepositTransactions(phone);
     for (final t in txns) {
-      if (t.id != null) {
-        _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'deposit_transactions', t.id.toString()));
-      }
+      _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'deposit_transactions', t.id.toString()));
     }
   }
   // ─── Cloud Restore ─────────────────────────────────────────────────────
