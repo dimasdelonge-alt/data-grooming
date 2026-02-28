@@ -26,9 +26,14 @@ class CatAvatar extends StatelessWidget {
 
     Widget avatar;
 
+    debugPrint('[CatAvatar] build() imagePath null=${imagePath == null}, empty=${imagePath?.isEmpty}, length=${imagePath?.length ?? 0}, kIsWeb=$kIsWeb');
+
     if (imagePath != null && imagePath!.isNotEmpty) {
-      if (ImageUtils.isBase64Image(imagePath!)) {
+      final isB64 = ImageUtils.isBase64Image(imagePath!);
+      debugPrint('[CatAvatar] isBase64Image=$isB64, first20chars="${imagePath!.substring(0, imagePath!.length > 20 ? 20 : imagePath!.length)}"');
+      if (isB64) {
         if (kIsWeb) {
+          debugPrint('[CatAvatar] → Taking WEB Blob URL path');
           // Web: use Blob URL to bypass data URI size limits on mobile browsers
           avatar = ClipRRect(
             borderRadius: BorderRadius.circular(size / 2),
@@ -40,6 +45,7 @@ class CatAvatar extends StatelessWidget {
             ),
           );
         } else {
+          debugPrint('[CatAvatar] → Taking NATIVE Image.memory path');
           // Native: use Image.memory as before
           try {
             final bytes = base64Decode(imagePath!);
@@ -58,10 +64,12 @@ class CatAvatar extends StatelessWidget {
           }
         }
       } else {
+        debugPrint('[CatAvatar] → Non-Base64 path (legacy fallback)');
         // Non-Base64 path (legacy) — show fallback
         avatar = _fallback(isDark);
       }
     } else {
+      debugPrint('[CatAvatar] → No imagePath (null/empty fallback)');
       avatar = _fallback(isDark);
     }
 
