@@ -445,8 +445,9 @@ class FirebaseRepository {
     }
   }
 
-  /// Removes old web device entries (DEV-xxx with deviceName 'Web Browser')
-  /// that were created before fingerprint-based IDs (WEB-xxx).
+  /// Removes old/orphan web device entries from Firebase.
+  /// Cleans up: DEV-xxx (old timestamp web IDs) and WEB-xxx (old fingerprint IDs).
+  /// Only keeps the current WEB- device ID.
   Future<void> _cleanupOldWebDevices(String shopId, String currentDeviceId) async {
     try {
       final response = await http.get(
@@ -458,11 +459,14 @@ class FirebaseRepository {
           for (final entry in decoded.entries) {
             final id = entry.key as String;
             final data = entry.value;
-            // Remove old DEV- entries that were web browsers
-            if (id != currentDeviceId &&
-                id.startsWith('DEV-') &&
+            if (id == currentDeviceId) continue; // Keep current device
+
+            final isOldWebTimestamp = id.startsWith('DEV-') &&
                 data is Map &&
-                data['deviceName'] == 'Web Browser') {
+                data['deviceName'] == 'Web Browser';
+            final isOldWebFingerprint = id.startsWith('WEB-');
+
+            if (isOldWebTimestamp || isOldWebFingerprint) {
               await http.delete(
                 Uri.parse('$_baseUrl/credentials/$shopId/devices/$id.json'),
               );
