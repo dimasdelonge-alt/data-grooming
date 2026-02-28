@@ -400,10 +400,19 @@ class FirebaseRepository {
       );
       if (checkResponse.statusCode == 200 &&
           checkResponse.body != 'null') {
-        return true; // Already registered
+        // Already registered — still clean up old web entries
+        if (deviceId.startsWith('WEB-')) {
+          await _cleanupOldWebDevices(shopId, deviceId);
+        }
+        return true;
       }
 
-      // 2. Check current device count
+      // 2. Clean up old web device entries first (DEV-xxx with 'Web Browser')
+      if (deviceId.startsWith('WEB-')) {
+        await _cleanupOldWebDevices(shopId, deviceId);
+      }
+
+      // 3. Check current device count (after cleanup)
       final devicesResponse = await http.get(
         Uri.parse('$_baseUrl/credentials/$shopId/devices.json'),
       );
@@ -415,7 +424,7 @@ class FirebaseRepository {
         }
       }
 
-      // 3. Register if under limit
+      // 4. Register if under limit
       if (currentCount < maxDevices) {
         final deviceData = {
           'deviceName': deviceName,
@@ -433,6 +442,37 @@ class FirebaseRepository {
     } catch (e) {
       print('registerDevice error: $e');
       return false;
+    }
+  }
+
+  /// Removes old web device entries (DEV-xxx with deviceName 'Web Browser')
+  /// that were created before fingerprint-based IDs (WEB-xxx).
+  Future<void> _cleanupOldWebDevices(String shopId, String currentDeviceId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/credentials/$shopId/devices.json'),
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map) {
+          for (final entry in decoded.entries) {
+            final id = entry.key as String;
+            final data = entry.value;
+            // Remove old DEV- entries that were web browsers
+            if (id != currentDeviceId &&
+                id.startsWith('DEV-') &&
+                data is Map &&
+                data['deviceName'] == 'Web Browser') {
+              await http.delete(
+                Uri.parse('$_baseUrl/credentials/$shopId/devices/$id.json'),
+              );
+              print('[DeviceCleanup] Removed old web device: $id');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('[DeviceCleanup] Error: $e');
     }
   }
 
