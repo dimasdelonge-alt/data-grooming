@@ -474,7 +474,15 @@
     "passwordMismatch": "New passwords do not match",
     "wrongOldPassword": "Old password is incorrect",
     "passwordChanged": "Password changed successfully!",
-    "passwordChangeFailed": "Failed to change password"
+    "passwordChangeFailed": "Failed to change password",
+    "allowNegativeBalance": "Allow negative balance (debt)",
+    "balanceWillBecome": "Balance will become {amount}",
+    "@balanceWillBecome": { "placeholders": { "amount": { "type": "String" } } },
+    "totalReceivables": "Total Receivables",
+    "addIncome": "Add Income",
+    "addTransaction": "Add Transaction",
+    "otherIncomeLabel": "Other",
+    "deleteIncomeConfirm": "Are you sure you want to delete this income?"
 }
 
 

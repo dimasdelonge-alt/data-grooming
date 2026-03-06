@@ -11,6 +11,7 @@ import '../../data/entity/hotel_entities.dart';
 import '../../data/entity/cat.dart';
 import '../../data/model/hotel_models.dart';
 import '../../util/currency_formatter.dart';
+import '../../data/entity/expense.dart';
 
 class FinancialScreen extends StatefulWidget {
   const FinancialScreen({super.key});
@@ -297,7 +298,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
         floatingActionButton: _isSelecting
             ? null
             : FloatingActionButton(
-                onPressed: () => _showExpenseDialog(context, vm, l10n),
+                onPressed: () => _showAddTransactionSheet(context, vm, l10n),
                 child: const Icon(Icons.add_rounded),
               ),
         body: Column(
@@ -426,6 +427,96 @@ class _FinancialScreenState extends State<FinancialScreen> {
     }
   }
 
+  void _showAddTransactionSheet(BuildContext context, FinancialViewModel vm, AppLocalizations l10n) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.addTransaction, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.green.withValues(alpha: 0.1),
+                  child: const Icon(Icons.trending_up_rounded, color: Colors.green),
+                ),
+                title: Text(l10n.addIncome),
+                subtitle: Text(l10n.otherIncomeLabel),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showIncomeDialog(context, vm, l10n);
+                },
+              ),
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
+                  child: const Icon(Icons.trending_down_rounded, color: Colors.redAccent),
+                ),
+                title: Text(l10n.addExpense),
+                subtitle: Text(l10n.generalCategory),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showExpenseDialog(context, vm, l10n);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showIncomeDialog(BuildContext context, FinancialViewModel vm, AppLocalizations l10n) {
+    final noteCtrl = TextEditingController();
+    final amountCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.addIncome),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: noteCtrl,
+              decoration: InputDecoration(labelText: l10n.description),
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: amountCtrl,
+              decoration: InputDecoration(labelText: l10n.amountRp, prefixText: 'Rp '),
+              keyboardType: TextInputType.number,
+              inputFormatters: [CurrencyInputFormatter()],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+          FilledButton(
+            onPressed: () async {
+              final note = noteCtrl.text.trim();
+              final raw = amountCtrl.text.replaceAll('.', '');
+              final amount = double.tryParse(raw) ?? 0;
+              if (note.isEmpty || amount <= 0) return;
+              await vm.addIncome(note, amount, DateTime.now().millisecondsSinceEpoch);
+              if (context.mounted) {
+                context.read<GroomingViewModel>().refreshDashboardStats();
+                Navigator.pop(ctx);
+              }
+            },
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showExpenseDialog(BuildContext context, FinancialViewModel vm, AppLocalizations l10n) {
     final noteCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
@@ -545,6 +636,7 @@ class _IncomeTab extends StatelessWidget {
      final totalIncome = vm.monthlyIncome;
      final groomingPct = totalIncome > 0 ? vm.groomingIncome / totalIncome : 0.0;
      final hotelPct = totalIncome > 0 ? vm.hotelIncome / totalIncome : 0.0;
+     final otherPct = totalIncome > 0 ? vm.manualIncome / totalIncome : 0.0;
      final transactions = vm.allTransactions;
 
     return ListView(
@@ -559,6 +651,11 @@ class _IncomeTab extends StatelessWidget {
         const SizedBox(height: 12),
         // Hotel Bar
         _IncomeBar(label: l10n.hotelLabel, amount: vm.hotelIncome, percent: hotelPct, color: Colors.blue),
+        // Other Income Bar (only show if > 0)
+        if (vm.manualIncome > 0) ...[        
+          const SizedBox(height: 12),
+          _IncomeBar(label: l10n.otherIncomeLabel, amount: vm.manualIncome, percent: otherPct, color: Colors.orange),
+        ],
         
         const SizedBox(height: 24),
          Text(l10n.transactionHistoryHeader, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -580,9 +677,33 @@ class _IncomeTab extends StatelessWidget {
         else
           ...transactions.map((txn) {
              final isSession = txn is Session;
-             final date = isSession ? txn.timestamp : (txn as HotelBooking).checkOutDate;
-             final double amount = isSession ? (txn).totalCost.toDouble() : (txn as HotelBooking).totalCost;
-             final catId = isSession ? txn.catId : (txn as HotelBooking).catId;
+             final isHotel = txn is HotelBooking;
+             final isManualIncome = txn is Expense;
+
+             if (isManualIncome) {
+               // Manual income entry
+               final income = txn;
+               return Card(
+                 margin: const EdgeInsets.only(bottom: 8),
+                 child: ListTile(
+                   leading: CircleAvatar(
+                     backgroundColor: Colors.orange.withValues(alpha: 0.1),
+                     child: const Icon(Icons.attach_money_rounded, color: Colors.orange, size: 20),
+                   ),
+                   title: Text('${l10n.otherIncomeLabel} - ${income.note}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                   subtitle: Text(app_date.formatDateTime(income.date)),
+                   trailing: Text(
+                     app_date.formatCurrencyDouble(income.amount),
+                     style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+                   ),
+                   onLongPress: () => _showDeleteIncomeConfirm(context, vm, income, l10n),
+                 ),
+               );
+             }
+
+             final date = isSession ? (txn as Session).timestamp : (txn as HotelBooking).checkOutDate;
+             final double amount = isSession ? (txn as Session).totalCost.toDouble() : (txn as HotelBooking).totalCost;
+             final catId = isSession ? (txn as Session).catId : (txn as HotelBooking).catId;
              final catName = vm.getCatName(catId);
              final key = txnKey(txn);
              final isSelected = selectedKeys.contains(key);
@@ -629,6 +750,30 @@ class _IncomeTab extends StatelessWidget {
              );
           }),
       ],
+    );
+  }
+
+  void _showDeleteIncomeConfirm(BuildContext context, FinancialViewModel vm, Expense income, AppLocalizations l10n) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteConfirmTitle),
+        content: Text(l10n.deleteIncomeConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+          FilledButton(
+            onPressed: () async {
+              await vm.deleteIncome(income);
+              if (context.mounted) {
+                context.read<GroomingViewModel>().refreshDashboardStats();
+                Navigator.pop(ctx);
+              }
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
     );
   }
 }

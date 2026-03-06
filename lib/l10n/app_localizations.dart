@@ -2846,6 +2846,48 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Gagal mengubah password'**
   String get passwordChangeFailed;
+
+  /// No description provided for @allowNegativeBalance.
+  ///
+  /// In id, this message translates to:
+  /// **'Izinkan saldo minus (hutang)'**
+  String get allowNegativeBalance;
+
+  /// No description provided for @balanceWillBecome.
+  ///
+  /// In id, this message translates to:
+  /// **'Saldo akan menjadi {amount}'**
+  String balanceWillBecome(String amount);
+
+  /// No description provided for @totalReceivables.
+  ///
+  /// In id, this message translates to:
+  /// **'Total Piutang'**
+  String get totalReceivables;
+
+  /// No description provided for @addIncome.
+  ///
+  /// In id, this message translates to:
+  /// **'Tambah Pemasukan'**
+  String get addIncome;
+
+  /// No description provided for @addTransaction.
+  ///
+  /// In id, this message translates to:
+  /// **'Tambah Transaksi'**
+  String get addTransaction;
+
+  /// No description provided for @otherIncomeLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Lainnya'**
+  String get otherIncomeLabel;
+
+  /// No description provided for @deleteIncomeConfirm.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus pemasukan ini?'**
+  String get deleteIncomeConfirm;
 }
 
 class _AppLocalizationsDelegate

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../grooming_view_model.dart';
+import '../financial_view_model.dart';
 import '../theme/theme.dart';
 import '../common/cat_avatar.dart';
 import '../../data/entity/cat.dart';
@@ -332,6 +333,26 @@ class _DashboardBodyState extends State<_DashboardBody> {
                   app_date.formatCurrencyDouble(vm.currentMonthExpense),
                 ),
               ],
+            ),
+            // Total Piutang (receivables from negative deposit balances)
+            Builder(
+              builder: (context) {
+                final finVm = context.watch<FinancialViewModel>();
+                if (finVm.totalReceivables <= 0) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, size: 14, color: Colors.red.withOpacity(0.7)),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${l10n.totalReceivables}: ${app_date.formatCurrencyDouble(finVm.totalReceivables)}',
+                        style: TextStyle(fontSize: 11, color: Colors.red.withOpacity(0.8), fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         ),

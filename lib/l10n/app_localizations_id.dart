@@ -1507,4 +1507,27 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get passwordChangeFailed => 'Gagal mengubah password';
+
+  @override
+  String get allowNegativeBalance => 'Izinkan saldo minus (hutang)';
+
+  @override
+  String balanceWillBecome(String amount) {
+    return 'Saldo akan menjadi $amount';
+  }
+
+  @override
+  String get totalReceivables => 'Total Piutang';
+
+  @override
+  String get addIncome => 'Tambah Pemasukan';
+
+  @override
+  String get addTransaction => 'Tambah Transaksi';
+
+  @override
+  String get otherIncomeLabel => 'Lainnya';
+
+  @override
+  String get deleteIncomeConfirm => 'Hapus pemasukan ini?';
 }

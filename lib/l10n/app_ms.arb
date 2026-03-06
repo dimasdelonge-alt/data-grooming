@@ -474,7 +474,15 @@
     "passwordMismatch": "Kata laluan baru tidak sepadan",
     "wrongOldPassword": "Kata laluan lama tidak betul",
     "passwordChanged": "Kata laluan berjaya ditukar!",
-    "passwordChangeFailed": "Gagal menukar kata laluan"
+    "passwordChangeFailed": "Gagal menukar kata laluan",
+    "allowNegativeBalance": "Izinkan baki negatif (hutang)",
+    "balanceWillBecome": "Baki akan menjadi {amount}",
+    "@balanceWillBecome": { "placeholders": { "amount": { "type": "String" } } },
+    "totalReceivables": "Jumlah Hutang",
+    "addIncome": "Tambah Pendapatan",
+    "addTransaction": "Tambah Transaksi",
+    "otherIncomeLabel": "Lain-lain",
+    "deleteIncomeConfirm": "Padam pendapatan ini?"
 }
 
 

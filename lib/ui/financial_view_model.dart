@@ -11,12 +11,14 @@ class FinancialViewModel extends ChangeNotifier {
   final GroomingRepository _repository;
 
   List<Expense> _expenses = [];
+  List<Expense> _manualIncomeEntries = [];
   List<OwnerDeposit> _deposits = [];
   bool _isLoading = true;
 
   // Report Data
   double _monthlyIncome = 0.0;
   double _monthlyExpense = 0.0;
+  double _monthlyManualIncome = 0.0;
   int _sessionsCount = 0;
 
   DateTime _currentMonth = DateTime.now();
@@ -31,12 +33,19 @@ class FinancialViewModel extends ChangeNotifier {
   }
 
   List<Expense> get expenses => _expenses;
+  List<Expense> get manualIncomeEntries => _manualIncomeEntries;
   List<OwnerDeposit> get deposits => _deposits;
   double get monthlyIncome => _monthlyIncome;
   double get monthlyExpense => _monthlyExpense;
+  double get manualIncome => _monthlyManualIncome;
   int get sessionsCount => _sessionsCount;
   bool get isLoading => _isLoading;
   DateTime get currentMonth => _currentMonth;
+
+  /// Total piutang (sum of all negative deposit balances, returned as positive)
+  double get totalReceivables => _deposits
+      .where((d) => d.balance < 0)
+      .fold(0.0, (sum, d) => sum + d.balance.abs());
 
   // Cat Lookup
   Map<int, String> _catNames = {};
@@ -103,10 +112,10 @@ class FinancialViewModel extends ChangeNotifier {
   double get hotelIncome => _monthlyHotelBookings.fold(0.0, (sum, b) => sum + b.totalCost);
   
   List<dynamic> get allTransactions {
-    final List<dynamic> all = [..._monthlySessions, ..._monthlyHotelBookings];
+    final List<dynamic> all = [..._monthlySessions, ..._monthlyHotelBookings, ..._manualIncomeEntries];
     all.sort((a, b) {
-      final timeA = a is Session ? a.timestamp : (a as HotelBooking).checkOutDate;
-      final timeB = b is Session ? b.timestamp : (b as HotelBooking).checkOutDate;
+      final timeA = a is Session ? a.timestamp : a is HotelBooking ? a.checkOutDate : (a as Expense).date;
+      final timeB = b is Session ? b.timestamp : b is HotelBooking ? b.checkOutDate : (b as Expense).date;
       return timeB.compareTo(timeA); // Descending
     });
     return all;
@@ -119,11 +128,18 @@ class FinancialViewModel extends ChangeNotifier {
     final start = DateTime(date.year, date.month, 1).millisecondsSinceEpoch;
     final end = DateTime(date.year, date.month + 1, 0, 23, 59, 59).millisecondsSinceEpoch;
 
-    // Load Expenses
+    // Load Expenses (excluding income entries)
     _repository.getExpensesByMonth(start, end).listen((list) {
       _expenses = list;
       _monthlyExpense = list.fold(0.0, (sum, e) => sum + e.amount);
       notifyListeners();
+    });
+
+    // Load Manual Income Entries
+    _repository.getIncomeByMonth(start, end).listen((list) {
+      _manualIncomeEntries = list;
+      _monthlyManualIncome = list.fold(0.0, (sum, e) => sum + e.amount);
+      _updateTotalIncome();
     });
 
     // Load Sessions (Grooming Income)
@@ -146,7 +162,7 @@ class FinancialViewModel extends ChangeNotifier {
   }
 
   void _updateTotalIncome() {
-    _monthlyIncome = groomingIncome + hotelIncome;
+    _monthlyIncome = groomingIncome + hotelIncome + _monthlyManualIncome;
     _isLoading = false;
     notifyListeners();
   }
@@ -164,8 +180,24 @@ class FinancialViewModel extends ChangeNotifier {
     _loadMonthData(_currentMonth); // Refresh data
   }
 
+  Future<void> addIncome(String description, double amount, int date) async {
+    final income = Expense(
+      note: description,
+      amount: amount,
+      category: 'income',
+      date: date,
+    );
+    await _repository.insertExpense(income);
+    _loadMonthData(_currentMonth); // Refresh data
+  }
+
   Future<void> deleteExpense(Expense expense) async {
     await _repository.deleteExpense(expense);
+    _loadMonthData(_currentMonth); // Refresh data
+  }
+
+  Future<void> deleteIncome(Expense income) async {
+    await _repository.deleteExpense(income);
     _loadMonthData(_currentMonth); // Refresh data
   }
 
@@ -220,6 +252,35 @@ class FinancialViewModel extends ChangeNotifier {
     await _repository.insertDepositTransaction(DepositTransaction(
       ownerPhone: existing.ownerPhone,
       amount: -actualAmount, // Negative for deduction
+      type: transactionType,
+      referenceId: refId,
+      notes: notes,
+      timestamp: now,
+    ));
+
+    _loadAllDeposits();
+  }
+
+  /// Deduct deposit allowing balance to go negative (hutang/debt).
+  /// Unlike [deductDeposit], this does NOT cap at available balance.
+  Future<void> deductDepositAllowNegative(String phone, double amount, String notes, int? refId, {TransactionType transactionType = TransactionType.adjustment}) async {
+    // Try exact match first, then normalized match
+    var existing = await _repository.getDeposit(phone);
+    if (existing == null) {
+      final normalized = PhoneNumberUtils.normalize(phone);
+      existing = await _repository.getDeposit(normalized);
+    }
+    if (existing == null) throw Exception('Deposit account not found');
+    if (amount <= 0) return;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final newBalance = existing.balance - amount; // Can go negative
+
+    await _repository.updateDeposit(existing.copyWith(balance: newBalance, lastUpdated: now));
+
+    await _repository.insertDepositTransaction(DepositTransaction(
+      ownerPhone: existing.ownerPhone,
+      amount: -amount, // Negative for deduction
       type: transactionType,
       referenceId: refId,
       notes: notes,

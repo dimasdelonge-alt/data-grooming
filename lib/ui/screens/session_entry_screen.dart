@@ -460,6 +460,7 @@ class _EditSessionViewState extends State<_EditSessionView> {
   final _notesController = TextEditingController();
   final _costController = TextEditingController(text: '0');
   bool _useDeposit = false;
+  bool _allowNegativeDeposit = false;
   OwnerDeposit? _ownerDeposit;
 
   static const _statuses = ['WAITING', 'BATHING', 'DRYING', 'FINISHING', 'PICKUP_READY', 'DONE'];
@@ -545,17 +546,29 @@ class _EditSessionViewState extends State<_EditSessionView> {
     // #5: Deduct deposit if applicable
     if (_useDeposit && _ownerDeposit != null && _currentStatus == 'DONE' && costClean > 0 && _cat != null) {
       try {
-        final deductAmount = _ownerDeposit!.balance < costClean.toDouble()
-            ? _ownerDeposit!.balance
-            : costClean.toDouble();
         final finVm = context.read<FinancialViewModel>();
-        await finVm.deductDeposit(
-          _cat!.ownerPhone,
-          deductAmount,
-          'Grooming: ${_cat!.catName}',
-          _session!.sessionId,
-          transactionType: TransactionType.groomingPayment,
-        );
+        if (_allowNegativeDeposit) {
+          // Full deduct — balance can go negative (hutang)
+          await finVm.deductDepositAllowNegative(
+            _cat!.ownerPhone,
+            costClean.toDouble(),
+            'Grooming: ${_cat!.catName}',
+            _session!.sessionId,
+            transactionType: TransactionType.groomingPayment,
+          );
+        } else {
+          // Partial deduct — cap at available balance
+          final deductAmount = _ownerDeposit!.balance < costClean.toDouble()
+              ? _ownerDeposit!.balance
+              : costClean.toDouble();
+          await finVm.deductDeposit(
+            _cat!.ownerPhone,
+            deductAmount,
+            'Grooming: ${_cat!.catName}',
+            _session!.sessionId,
+            transactionType: TransactionType.groomingPayment,
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -778,37 +791,75 @@ class _EditSessionViewState extends State<_EditSessionView> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(12),
-                child: Row(
+                child: Column(
                   children: [
-                    Checkbox(
-                      value: _useDeposit,
-                      onChanged: _ownerDeposit!.balance > 0
-                          ? (val) => setState(() => _useDeposit = val ?? false)
-                          : null,
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l10n.payFromDeposit, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          Text(
-                            l10n.balanceStr(app_date.formatCurrencyDouble(_ownerDeposit!.balance)),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: _ownerDeposit!.balance >= costValue.toDouble()
-                                  ? Colors.green
-                                  : Colors.orange,
-                            ),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _useDeposit,
+                          onChanged: (_ownerDeposit!.balance > 0 || _allowNegativeDeposit)
+                              ? (val) => setState(() {
+                                  _useDeposit = val ?? false;
+                                  if (!_useDeposit) _allowNegativeDeposit = false;
+                                })
+                              : null,
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(l10n.payFromDeposit, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text(
+                                l10n.balanceStr(app_date.formatCurrencyDouble(_ownerDeposit!.balance)),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: _ownerDeposit!.balance >= costValue.toDouble()
+                                      ? Colors.green
+                                      : _ownerDeposit!.balance < 0
+                                          ? Colors.red
+                                          : Colors.orange,
+                                ),
+                              ),
+                              if (_ownerDeposit!.balance < costValue.toDouble() && _ownerDeposit!.balance > 0 && !_allowNegativeDeposit)
+                                Text(
+                                  l10n.balanceNotEnoughDeduct(app_date.formatCurrencyDouble(_ownerDeposit!.balance)),
+                                  style: const TextStyle(fontSize: 11, color: Colors.orange),
+                                ),
+                            ],
                           ),
-                          if (_ownerDeposit!.balance < costValue.toDouble() && _ownerDeposit!.balance > 0)
-                            Text(
-                              l10n.balanceNotEnoughDeduct(app_date.formatCurrencyDouble(_ownerDeposit!.balance)),
-                              style: const TextStyle(fontSize: 11, color: Colors.orange),
-                            ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                    // Allow negative balance (hutang) checkbox
+                    if (_ownerDeposit!.balance < costValue.toDouble())
+                      Padding(
+                        padding: const EdgeInsets.only(left: 32),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: _allowNegativeDeposit,
+                              onChanged: (val) => setState(() {
+                                _allowNegativeDeposit = val ?? false;
+                                if (_allowNegativeDeposit) _useDeposit = true;
+                              }),
+                              activeColor: Colors.red,
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(l10n.allowNegativeBalance, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  Text(
+                                    l10n.balanceWillBecome(app_date.formatCurrencyDouble(_ownerDeposit!.balance - costValue.toDouble())),
+                                    style: const TextStyle(fontSize: 11, color: Colors.red),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),

@@ -1509,4 +1509,27 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get passwordChangeFailed => 'Gagal menukar kata laluan';
+
+  @override
+  String get allowNegativeBalance => 'Izinkan baki negatif (hutang)';
+
+  @override
+  String balanceWillBecome(String amount) {
+    return 'Baki akan menjadi $amount';
+  }
+
+  @override
+  String get totalReceivables => 'Jumlah Hutang';
+
+  @override
+  String get addIncome => 'Tambah Pendapatan';
+
+  @override
+  String get addTransaction => 'Tambah Transaksi';
+
+  @override
+  String get otherIncomeLabel => 'Lain-lain';
+
+  @override
+  String get deleteIncomeConfirm => 'Padam pendapatan ini?';
 }

@@ -1505,4 +1505,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordChangeFailed => 'Failed to change password';
+
+  @override
+  String get allowNegativeBalance => 'Allow negative balance (debt)';
+
+  @override
+  String balanceWillBecome(String amount) {
+    return 'Balance will become $amount';
+  }
+
+  @override
+  String get totalReceivables => 'Total Receivables';
+
+  @override
+  String get addIncome => 'Add Income';
+
+  @override
+  String get addTransaction => 'Add Transaction';
+
+  @override
+  String get otherIncomeLabel => 'Other';
+
+  @override
+  String get deleteIncomeConfirm =>
+      'Are you sure you want to delete this income?';
 }

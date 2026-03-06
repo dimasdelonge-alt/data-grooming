@@ -254,8 +254,14 @@ class GroomingRepository {
   Stream<List<Expense>> getExpensesByMonth(int start, int end) =>
       _dao.getExpensesByMonth(start, end);
 
+  Stream<List<Expense>> getIncomeByMonth(int start, int end) =>
+      _dao.getIncomeByMonth(start, end);
+
   Stream<double?> getTotalExpenseByDateRange(int start, int end) =>
       _dao.getTotalExpenseByDateRange(start, end);
+
+  Stream<double?> getTotalManualIncomeByDateRange(int start, int end) =>
+      _dao.getTotalManualIncomeByDateRange(start, end);
 
   Future<void> insertExpense(Expense expense) async {
     await _dao.insertExpense(expense);

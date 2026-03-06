@@ -585,7 +585,15 @@
     "passwordMismatch": "Password baru tidak cocok",
     "wrongOldPassword": "Password lama salah",
     "passwordChanged": "Password berhasil diubah!",
-    "passwordChangeFailed": "Gagal mengubah password"
+    "passwordChangeFailed": "Gagal mengubah password",
+    "allowNegativeBalance": "Izinkan saldo minus (hutang)",
+    "balanceWillBecome": "Saldo akan menjadi {amount}",
+    "@balanceWillBecome": { "placeholders": { "amount": { "type": "String" } } },
+    "totalReceivables": "Total Piutang",
+    "addIncome": "Tambah Pemasukan",
+    "addTransaction": "Tambah Transaksi",
+    "otherIncomeLabel": "Lainnya",
+    "deleteIncomeConfirm": "Hapus pemasukan ini?"
 }
 
 

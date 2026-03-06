@@ -874,6 +874,7 @@ class _BillingGroupCard extends StatelessWidget {
       PhoneNumberUtils.normalize(d.ownerPhone) == normalizedPhone
     ).firstOrNull;
     bool useDeposit = false;
+    bool allowNegativeDeposit = false;
 
     showDialog(
       context: context,
@@ -903,28 +904,68 @@ class _BillingGroupCard extends StatelessWidget {
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: CheckboxListTile(
-                      value: useDeposit,
-                       onChanged: ownerDeposit.balance > 0
-                          ? (val) => setDialogState(() => useDeposit = val ?? false)
-                          : null,
-                      title: Text(l10n.payFromDeposit, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l10n.balanceStr(app_date.formatCurrencyDouble(ownerDeposit.balance)),
-                              style: TextStyle(
-                                color: ownerDeposit.balance >= remaining ? Colors.green : Colors.orange,
-                                fontWeight: FontWeight.bold,
-                              )),
-                          if (ownerDeposit.balance < remaining && ownerDeposit.balance > 0)
-                            Text(l10n.balanceNotEnoughDeduct(app_date.formatCurrencyDouble(ownerDeposit.balance)),
-                                style: const TextStyle(fontSize: 11, color: Colors.orange)),
-                        ],
-                      ),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    child: Column(
+                      children: [
+                        CheckboxListTile(
+                          value: useDeposit,
+                          onChanged: (ownerDeposit.balance > 0 || allowNegativeDeposit)
+                              ? (val) => setDialogState(() {
+                                  useDeposit = val ?? false;
+                                  if (!useDeposit) allowNegativeDeposit = false;
+                                })
+                              : null,
+                          title: Text(l10n.payFromDeposit, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(l10n.balanceStr(app_date.formatCurrencyDouble(ownerDeposit.balance)),
+                                  style: TextStyle(
+                                    color: ownerDeposit.balance >= remaining
+                                        ? Colors.green
+                                        : ownerDeposit.balance < 0
+                                            ? Colors.red
+                                            : Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                              if (ownerDeposit.balance < remaining && ownerDeposit.balance > 0 && !allowNegativeDeposit)
+                                Text(l10n.balanceNotEnoughDeduct(app_date.formatCurrencyDouble(ownerDeposit.balance)),
+                                    style: const TextStyle(fontSize: 11, color: Colors.orange)),
+                            ],
+                          ),
+                          controlAffinity: ListTileControlAffinity.leading,
+                          dense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                        ),
+                        // Allow negative balance (hutang) checkbox
+                        if (ownerDeposit.balance < remaining)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 32, bottom: 8),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  value: allowNegativeDeposit,
+                                  onChanged: (val) => setDialogState(() {
+                                    allowNegativeDeposit = val ?? false;
+                                    if (allowNegativeDeposit) useDeposit = true;
+                                  }),
+                                  activeColor: Colors.red,
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(l10n.allowNegativeBalance, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                      Text(
+                                        l10n.balanceWillBecome(app_date.formatCurrencyDouble(ownerDeposit.balance - remaining)),
+                                        style: const TextStyle(fontSize: 11, color: Colors.red),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
@@ -938,17 +979,30 @@ class _BillingGroupCard extends StatelessWidget {
                   double actualDeducted = 0.0;
                   if (useDeposit && ownerDeposit != null && remaining > 0) {
                     try {
-                      final deductAmount = ownerDeposit.balance < remaining
-                          ? ownerDeposit.balance
-                          : remaining;
-                      await finVm.deductDeposit(
-                        group.ownerPhone,
-                        deductAmount,
-                        'Hotel: ${group.bookings.length} booking',
-                        null,
-                        transactionType: TransactionType.hotelPayment,
-                      );
-                      actualDeducted = deductAmount;
+                      if (allowNegativeDeposit) {
+                        // Full deduct — balance can go negative (hutang)
+                        await finVm.deductDepositAllowNegative(
+                          group.ownerPhone,
+                          remaining,
+                          'Hotel: ${group.bookings.length} booking',
+                          null,
+                          transactionType: TransactionType.hotelPayment,
+                        );
+                        actualDeducted = remaining;
+                      } else {
+                        // Partial deduct — cap at available balance
+                        final deductAmount = ownerDeposit.balance < remaining
+                            ? ownerDeposit.balance
+                            : remaining;
+                        await finVm.deductDeposit(
+                          group.ownerPhone,
+                          deductAmount,
+                          'Hotel: ${group.bookings.length} booking',
+                          null,
+                          transactionType: TransactionType.hotelPayment,
+                        );
+                        actualDeducted = deductAmount;
+                      }
                     } catch (e) {
                       debugPrint('Deposit deduct error: $e');
                     }

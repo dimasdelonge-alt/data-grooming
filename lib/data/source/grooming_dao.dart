@@ -480,9 +480,10 @@ class GroomingDao {
     final result = await db.rawQuery('''
       SELECT 
         (COALESCE((SELECT SUM(totalCost) FROM sessions WHERE timestamp BETWEEN ? AND ?), 0) + 
-         COALESCE((SELECT SUM(totalCost) FROM hotel_bookings WHERE status = 'COMPLETED' AND checkOutDate BETWEEN ? AND ?), 0))
+         COALESCE((SELECT SUM(totalCost) FROM hotel_bookings WHERE status = 'COMPLETED' AND checkOutDate BETWEEN ? AND ?), 0) +
+         COALESCE((SELECT SUM(amount) FROM expenses WHERE date BETWEEN ? AND ? AND category = 'income'), 0))
         as total
-    ''', [start, end, start, end]);
+    ''', [start, end, start, end, start, end]);
     final value = result.first['total'];
     yield value != null ? (value as num).toDouble() : null;
   }
@@ -521,7 +522,16 @@ class GroomingDao {
   Stream<List<Expense>> getExpensesByMonth(int start, int end) async* {
     final db = await _db;
     final results = await db.query('expenses',
-        where: 'date BETWEEN ? AND ?',
+        where: "date BETWEEN ? AND ? AND category != 'income'",
+        whereArgs: [start, end],
+        orderBy: 'date DESC');
+    yield results.map((row) => Expense.fromMap(row)).toList();
+  }
+
+  Stream<List<Expense>> getIncomeByMonth(int start, int end) async* {
+    final db = await _db;
+    final results = await db.query('expenses',
+        where: "date BETWEEN ? AND ? AND category = 'income'",
         whereArgs: [start, end],
         orderBy: 'date DESC');
     yield results.map((row) => Expense.fromMap(row)).toList();
@@ -530,7 +540,17 @@ class GroomingDao {
   Stream<double?> getTotalExpenseByDateRange(int start, int end) async* {
     final db = await _db;
     final result = await db.rawQuery(
-      'SELECT SUM(amount) as total FROM expenses WHERE date BETWEEN ? AND ?',
+      "SELECT SUM(amount) as total FROM expenses WHERE date BETWEEN ? AND ? AND category != 'income'",
+      [start, end],
+    );
+    final value = result.first['total'];
+    yield value != null ? (value as num).toDouble() : null;
+  }
+
+  Stream<double?> getTotalManualIncomeByDateRange(int start, int end) async* {
+    final db = await _db;
+    final result = await db.rawQuery(
+      "SELECT SUM(amount) as total FROM expenses WHERE date BETWEEN ? AND ? AND category = 'income'",
       [start, end],
     );
     final value = result.first['total'];
