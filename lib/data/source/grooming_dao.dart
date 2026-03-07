@@ -217,9 +217,9 @@ class GroomingDao {
     yield results.map((row) => Booking.fromMap(row)).toList();
   }
 
-  Future<void> insertBooking(Booking booking) async {
+  Future<int> insertBooking(Booking booking) async {
     final db = await _db;
-    await db.insert('bookings', booking.toMap(),
+    return await db.insert('bookings', booking.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -246,9 +246,9 @@ class GroomingDao {
     yield results.map((row) => GroomingService.fromMap(row)).toList();
   }
 
-  Future<void> insertService(GroomingService service) async {
+  Future<int> insertService(GroomingService service) async {
     final db = await _db;
-    await db.insert('grooming_services', service.toMap(),
+    return await db.insert('grooming_services', service.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -347,9 +347,9 @@ class GroomingDao {
     return HotelRoom.fromMap(results.first);
   }
 
-  Future<void> insertRoom(HotelRoom room) async {
+  Future<int> insertRoom(HotelRoom room) async {
     final db = await _db;
-    await db.insert('hotel_rooms', room.toMap(),
+    return await db.insert('hotel_rooms', room.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -504,9 +504,9 @@ class GroomingDao {
     yield results.map((row) => HotelAddOn.fromMap(row)).toList();
   }
 
-  Future<void> insertAddOn(HotelAddOn addOn) async {
+  Future<int> insertAddOn(HotelAddOn addOn) async {
     final db = await _db;
-    await db.insert('hotel_addons', addOn.toMap(),
+    return await db.insert('hotel_addons', addOn.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -557,9 +557,9 @@ class GroomingDao {
     yield value != null ? (value as num).toDouble() : null;
   }
 
-  Future<void> insertExpense(Expense expense) async {
+  Future<int> insertExpense(Expense expense) async {
     final db = await _db;
-    await db.insert('expenses', expense.toMap(),
+    return await db.insert('expenses', expense.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -579,9 +579,9 @@ class GroomingDao {
     yield results.map((row) => ChipOption.fromMap(row)).toList();
   }
 
-  Future<void> insertOption(ChipOption option) async {
+  Future<int> insertOption(ChipOption option) async {
     final db = await _db;
-    await db.insert('chip_options', option.toMap(),
+    return await db.insert('chip_options', option.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -686,6 +686,13 @@ class GroomingDao {
     await db.delete('chip_options');
     await db.delete('grooming_services');
     await db.delete('cats');
+  }
+
+  /// Toggle foreign key constraints on or off.
+  /// Used during restore to allow inserting sessions for deleted cats.
+  Future<void> setForeignKeys(bool enabled) async {
+    final db = await _db;
+    await db.execute('PRAGMA foreign_keys = ${enabled ? 'ON' : 'OFF'}');
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

@@ -57,8 +57,9 @@ class GroomingRepository {
   Future<Cat?> getCatById(int id) => _dao.getCatById(id);
 
   Future<void> insertCat(Cat cat) async {
-    await _dao.insertCat(cat);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncCat(shopId, cat));
+    final newId = await _dao.insertCat(cat);
+    final catWithId = cat.copyWith(catId: newId);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncCat(shopId, catWithId));
   }
 
   Future<void> updateCat(Cat cat) async {
@@ -118,8 +119,9 @@ class GroomingRepository {
       _dao.getOptionsByCategory(category);
 
   Future<void> insertOption(ChipOption option) async {
-    await _dao.insertOption(option);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncChipOption(shopId, option));
+    final newId = await _dao.insertOption(option);
+    final optionWithId = option.copyWith(id: newId);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncChipOption(shopId, optionWithId));
   }
 
   Future<void> deleteOption(ChipOption option) async {
@@ -143,8 +145,9 @@ class GroomingRepository {
   Stream<List<Booking>> get allBookings => _dao.getAllBookings();
 
   Future<void> insertBooking(Booking booking) async {
-    await _dao.insertBooking(booking);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncGroomingBooking(shopId, booking));
+    final newId = await _dao.insertBooking(booking);
+    final bookingWithId = booking.copyWith(bookingId: newId);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncGroomingBooking(shopId, bookingWithId));
   }
 
   Future<void> updateBooking(Booking booking) async {
@@ -162,8 +165,9 @@ class GroomingRepository {
   Stream<List<GroomingService>> getAllServices() => _dao.getAllServices();
 
   Future<void> insertService(GroomingService service) async {
-    await _dao.insertService(service);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncService(shopId, service));
+    final newId = await _dao.insertService(service);
+    final serviceWithId = service.copyWith(id: newId);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncService(shopId, serviceWithId));
   }
 
   Future<void> updateService(GroomingService service) async {
@@ -199,8 +203,9 @@ class GroomingRepository {
   Stream<List<HotelRoom>> getAllRooms() => _dao.getAllRooms();
   Future<HotelRoom?> getRoomById(int id) => _dao.getRoomById(id);
   Future<void> insertRoom(HotelRoom room) async {
-    await _dao.insertRoom(room);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelRoom(shopId, room));
+    final newId = await _dao.insertRoom(room);
+    final roomWithId = room.copyWith(id: newId);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelRoom(shopId, roomWithId));
   }
 
   Future<void> updateRoom(HotelRoom room) async {
@@ -218,8 +223,9 @@ class GroomingRepository {
   Stream<List<HotelBooking>> getHotelBookingsForCat(int catId) => _dao.getHotelBookingsForCat(catId);
   Future<HotelBooking?> getHotelBookingById(int id) => _dao.getHotelBookingById(id);
   Future<void> insertHotelBooking(HotelBooking booking) async {
-    await _dao.insertHotelBooking(booking);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelBooking(shopId, booking));
+    final newId = await _dao.insertHotelBooking(booking);
+    final bookingWithId = booking.copyWith(id: newId);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelBooking(shopId, bookingWithId));
     _hotelBookingChangeController.add(null);
   }
 
@@ -240,8 +246,9 @@ class GroomingRepository {
 
   Future<List<HotelAddOn>> getAllAddOns() => _dao.getAllAddOns().first;
   Future<void> insertAddOn(HotelAddOn addOn) async {
-    await _dao.insertAddOn(addOn);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelAddOn(shopId, addOn));
+    final newId = await _dao.insertAddOn(addOn);
+    final addOnWithId = addOn.copyWith(id: newId);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelAddOn(shopId, addOnWithId));
   }
 
   Future<void> deleteAddOn(HotelAddOn addOn) async {
@@ -264,8 +271,9 @@ class GroomingRepository {
       _dao.getTotalManualIncomeByDateRange(start, end);
 
   Future<void> insertExpense(Expense expense) async {
-    await _dao.insertExpense(expense);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncExpense(shopId, expense));
+    final newId = await _dao.insertExpense(expense);
+    final expenseWithId = expense.copyWith(id: newId);
+    _syncIfEnabled((shopId) => _firebaseRepo.syncExpense(shopId, expenseWithId));
     _expenseChangeController.add(null);
   }
 
@@ -329,7 +337,9 @@ class GroomingRepository {
 
     print('fullRestoreFromCloud: Data fetched! cats=${cloudData.cats.length}, sessions=${cloudData.sessions.length}, rooms=${cloudData.hotelRooms.length}, hotelBookings=${cloudData.hotelBookings.length}, services=${cloudData.services.length}, expenses=${cloudData.expenses.length}, chips=${cloudData.chipOptions.length}, bookings=${cloudData.bookings.length}, hotelAdds=${cloudData.hotelAdds.length}, deposits=${cloudData.ownerDeposits.length}, photos=${cloudData.catPhotos.length}');
 
-    // 0. Clear all local data first (clean slate for restore)
+    // 0. Disable foreign keys and clear all local data (clean slate for restore)
+    await _dao.setForeignKeys(false);
+    print('fullRestoreFromCloud: Foreign keys disabled for restore.');
     print('fullRestoreFromCloud: Clearing local database...');
     await _dao.clearAllData();
     print('fullRestoreFromCloud: Local database cleared.');
@@ -522,6 +532,10 @@ class GroomingRepository {
       }
     }
     print('fullRestoreFromCloud: Restored $photoCount cat photos.');
+
+    // Re-enable foreign keys after restore
+    await _dao.setForeignKeys(true);
+    print('fullRestoreFromCloud: Foreign keys re-enabled.');
 
     print('fullRestoreFromCloud: \u2705 RESTORE COMPLETE!');
     _dataRestoredController.add(null);
