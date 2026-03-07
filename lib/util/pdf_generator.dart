@@ -492,7 +492,7 @@ class PdfGenerator {
                 pw.Center(
                   child: pw.Opacity(
                     opacity: 0.1,
-                    child: pw.Image(logoImage, width: 240),
+                    child: pw.Image(logoImage, width: 160),
                   ),
                 ),
             ],
@@ -516,12 +516,12 @@ class PdfGenerator {
                 children: [
                   // ─── Period ──────────────────────────────────
                   pw.Text('Periode: ${DateFormat('MMMM yyyy', 'id_ID').format(month)}',
-                      style: pw.TextStyle(font: boldFont, fontSize: 18)),
-                  pw.SizedBox(height: 16),
+                      style: pw.TextStyle(font: boldFont, fontSize: 14)),
+                  pw.SizedBox(height: 8),
 
                   // ─── Summary Box ────────────────────────────
                   pw.Container(
-                    padding: const pw.EdgeInsets.all(12),
+                    padding: const pw.EdgeInsets.all(8),
                     decoration: pw.BoxDecoration(
                       border: pw.Border.all(color: PdfColors.grey300),
                       borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
@@ -535,11 +535,11 @@ class PdfGenerator {
                       ],
                     ),
                   ),
-                  pw.SizedBox(height: 16),
+                  pw.SizedBox(height: 8),
 
                   // ─── Category Breakdown ─────────────────────
                   pw.Container(
-                    padding: const pw.EdgeInsets.all(10),
+                    padding: const pw.EdgeInsets.all(8),
                     decoration: pw.BoxDecoration(
                       color: PdfColors.grey100,
                       borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
@@ -548,7 +548,7 @@ class PdfGenerator {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text('Ringkasan Pemasukan per Kategori',
-                            style: pw.TextStyle(font: boldFont, fontSize: 13)),
+                            style: pw.TextStyle(font: boldFont, fontSize: 11)),
                         pw.SizedBox(height: 6),
                         pw.Row(
                           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -584,11 +584,11 @@ class PdfGenerator {
                       ],
                     ),
                   ),
-                  pw.SizedBox(height: 20),
+                  pw.SizedBox(height: 10),
 
                   // ─── Grooming Detail ────────────────────────
                   if (sessions.isNotEmpty) ...[
-                    _buildSectionTitle('RINCIAN GROOMING', _primaryColor, boldFont, padding: 0),
+                    _buildSectionTitle('RINCIAN GROOMING', _primaryColor, boldFont, padding: 0, fontSize: 13),
                     pw.TableHelper.fromTextArray(
                       context: context,
                       border: pw.TableBorder.all(color: PdfColors.grey300),
@@ -610,12 +610,12 @@ class PdfGenerator {
                       child: pw.Text('Total Grooming: ${fmt.format(groomingTotal)}',
                           style: pw.TextStyle(font: boldFont, fontSize: 11)),
                     ),
-                    pw.SizedBox(height: 16),
+                    pw.SizedBox(height: 10),
                   ],
 
                   // ─── Hotel Detail ───────────────────────────
                   if (hotelBookings.isNotEmpty) ...[
-                    _buildSectionTitle('RINCIAN HOTEL', _primaryColor, boldFont, padding: 0),
+                    _buildSectionTitle('RINCIAN HOTEL', _primaryColor, boldFont, padding: 0, fontSize: 13),
                     pw.TableHelper.fromTextArray(
                       context: context,
                       border: pw.TableBorder.all(color: PdfColors.grey300),
@@ -637,12 +637,12 @@ class PdfGenerator {
                       child: pw.Text('Total Hotel: ${fmt.format(hotelTotal)}',
                           style: pw.TextStyle(font: boldFont, fontSize: 11)),
                     ),
-                    pw.SizedBox(height: 16),
+                    pw.SizedBox(height: 10),
                   ],
 
                   // ─── Manual Income Detail ───────────────────
                   if (manualIncomeEntries.isNotEmpty) ...[
-                    _buildSectionTitle('PEMASUKAN LAINNYA', _primaryColor, boldFont, padding: 0),
+                    _buildSectionTitle('PEMASUKAN LAINNYA', _primaryColor, boldFont, padding: 0, fontSize: 13),
                     pw.TableHelper.fromTextArray(
                       context: context,
                       border: pw.TableBorder.all(color: PdfColors.grey300),
@@ -662,11 +662,11 @@ class PdfGenerator {
                       child: pw.Text('Total Lainnya: ${fmt.format(otherTotal)}',
                           style: pw.TextStyle(font: boldFont, fontSize: 11)),
                     ),
-                    pw.SizedBox(height: 16),
+                    pw.SizedBox(height: 10),
                   ],
 
                   // ─── Expense Detail ─────────────────────────
-                  _buildSectionTitle('RINCIAN PENGELUARAN', PdfColors.red800, boldFont, padding: 0),
+                  _buildSectionTitle('RINCIAN PENGELUARAN', PdfColors.red800, boldFont, padding: 0, fontSize: 13),
                   if (expenses.isEmpty)
                     pw.Padding(
                       padding: const pw.EdgeInsets.only(top: 4),
@@ -704,7 +704,7 @@ class PdfGenerator {
     );
 
     final bytes = await doc.save();
-    await _handleShare(bytes, 'Laporan_${DateFormat('MMM_yyyy').format(month)}');
+    await _handleShare(bytes, 'Laporan_${DateFormat('MMM_yyyy').format(month)}', asPdf: true);
   }
 
   static Future<void> printSessionInvoice({
@@ -1672,29 +1672,28 @@ class PdfGenerator {
     return pw.Container(
       width: double.infinity,
       color: _primaryColor,
-      padding: const pw.EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+      padding: const pw.EdgeInsets.symmetric(vertical: 12, horizontal: 32),
       child: pw.Column(
         children: [
           pw.Text(businessName.toUpperCase(),
               textAlign: pw.TextAlign.center,
-              style: pw.TextStyle(color: PdfColors.white, fontSize: 30, fontWeight: pw.FontWeight.bold)),
-          pw.SizedBox(height: 4),
-          // If address is long, show on separate lines (like Kotlin)
+              style: pw.TextStyle(color: PdfColors.white, fontSize: 22, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 2),
           if (isLongAddress) ...[
             pw.Text(businessAddress,
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(color: PdfColors.white, fontSize: 15)),
+                style: pw.TextStyle(color: PdfColors.white, fontSize: 11)),
             pw.Text(businessPhone,
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(color: PdfColors.white, fontSize: 15)),
+                style: pw.TextStyle(color: PdfColors.white, fontSize: 11)),
           ] else
             pw.Text("${hasAddress ? '$businessAddress • ' : ''}$businessPhone",
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(color: PdfColors.white, fontSize: 15)),
-          pw.SizedBox(height: 12),
+                style: pw.TextStyle(color: PdfColors.white, fontSize: 11)),
+          pw.SizedBox(height: 6),
           pw.Text(title,
               textAlign: pw.TextAlign.center,
-              style: pw.TextStyle(color: PdfColors.white, fontSize: 24, fontWeight: pw.FontWeight.bold, letterSpacing: 2)),
+              style: pw.TextStyle(color: PdfColors.white, fontSize: 16, fontWeight: pw.FontWeight.bold, letterSpacing: 2)),
         ],
       ),
     );
@@ -1774,9 +1773,9 @@ class PdfGenerator {
     );
   }
 
-  static Future<void> _handleShare(Uint8List bytes, String filename) async {
+  static Future<void> _handleShare(Uint8List bytes, String filename, {bool asPdf = false}) async {
     try {
-      await io_helper.shareDocument(bytes, filename);
+      await io_helper.shareDocument(bytes, filename, asPdf: asPdf);
     } catch (e) {
       debugPrint('Share error: $e');
       await Printing.layoutPdf(onLayout: (format) async => bytes, name: filename);

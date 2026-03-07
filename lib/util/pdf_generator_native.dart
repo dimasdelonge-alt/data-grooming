@@ -28,13 +28,22 @@ pw.MemoryImage? loadLogoImage(String logoPath) {
   return null;
 }
 
-/// Share document: save to temp, rasterize to PNG, share via SharePlus.
-Future<void> shareDocument(Uint8List bytes, String filename) async {
+/// Share document: save to temp, optionally rasterize to PNG, share via SharePlus.
+Future<void> shareDocument(Uint8List bytes, String filename, {bool asPdf = false}) async {
   final tempDir = await getTemporaryDirectory();
+
+  if (asPdf) {
+    // Share as PDF directly (multi-page reports)
+    final pdfFile = File('${tempDir.path}/$filename.pdf');
+    await pdfFile.writeAsBytes(bytes);
+    await Share.shareXFiles([XFile(pdfFile.path)], text: filename);
+    return;
+  }
+
+  // Rasterize for sharing as PNG (single-page invoices)
   final pdfFile = File('${tempDir.path}/$filename.pdf');
   await pdfFile.writeAsBytes(bytes);
 
-  // Rasterize for sharing as PNG
   final filesToShare = <XFile>[];
   await for (final page in Printing.raster(bytes, pages: [0], dpi: 200)) {
     final pngBytes = await page.toPng();

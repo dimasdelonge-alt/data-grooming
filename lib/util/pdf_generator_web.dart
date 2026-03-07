@@ -20,8 +20,26 @@ pw.MemoryImage? loadLogoImage(String logoPath) {
   return null;
 }
 
-/// Web: rasterize PDF to PNG, then trigger browser download as image.
-Future<void> shareDocument(Uint8List bytes, String filename) async {
+/// Web: rasterize PDF to PNG (or share as PDF), then trigger browser download.
+Future<void> shareDocument(Uint8List bytes, String filename, {bool asPdf = false}) async {
+  if (asPdf) {
+    // Download as PDF directly (multi-page reports)
+    final blob = web.Blob(
+      [bytes.toJS].toJS,
+      web.BlobPropertyBag(type: 'application/pdf'),
+    );
+    final url = web.URL.createObjectURL(blob);
+    final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
+    anchor.href = url;
+    anchor.download = '$filename.pdf';
+    anchor.style.display = 'none';
+    web.document.body?.appendChild(anchor);
+    anchor.click();
+    web.document.body?.removeChild(anchor);
+    web.URL.revokeObjectURL(url);
+    return;
+  }
+
   try {
     // Rasterize first page to PNG (same as native)
     await for (final page in Printing.raster(bytes, pages: [0], dpi: 200)) {
