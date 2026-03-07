@@ -1068,7 +1068,7 @@ class _AddOnFormState extends State<_AddOnForm> {
     return Column(
       children: [
         DropdownButtonFormField<HotelBooking>(
-          value: _selectedBooking,
+          initialValue: _selectedBooking,
           decoration: InputDecoration(labelText: widget.l10n.selectCatRoom),
           items: widget.bookings.asMap().entries.map((entry) {
             final idx = entry.key;

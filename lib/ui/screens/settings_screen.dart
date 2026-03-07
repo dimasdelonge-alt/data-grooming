@@ -132,7 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.language),
                       ),
-                      value: vm.currentLanguage,
+                      initialValue: vm.currentLanguage,
                       items: const [
                         DropdownMenuItem(value: 'id', child: Text('🇮🇩 Bahasa Indonesia')),
                         DropdownMenuItem(value: 'en', child: Text('🇬🇧 English')),

@@ -701,9 +701,9 @@ class _IncomeTab extends StatelessWidget {
                );
              }
 
-             final date = isSession ? (txn as Session).timestamp : (txn as HotelBooking).checkOutDate;
-             final double amount = isSession ? (txn as Session).totalCost.toDouble() : (txn as HotelBooking).totalCost;
-             final catId = isSession ? (txn as Session).catId : (txn as HotelBooking).catId;
+             final date = isSession ? (txn).timestamp : (txn as HotelBooking).checkOutDate;
+             final double amount = isSession ? (txn).totalCost.toDouble() : (txn as HotelBooking).totalCost;
+             final catId = isSession ? (txn).catId : (txn as HotelBooking).catId;
              final catName = vm.getCatName(catId);
              final key = txnKey(txn);
              final isSelected = selectedKeys.contains(key);
