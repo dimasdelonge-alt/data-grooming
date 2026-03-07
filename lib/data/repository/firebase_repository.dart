@@ -377,6 +377,8 @@ class FirebaseRepository {
         // Check if expired
         final now = DateTime.now().millisecondsSinceEpoch;
         if (status.validUntil > 0 && now > status.validUntil) {
+          // Auto-update Firebase to starter so data stays in sync
+          await updateSubscription(shopId, defaultStatus);
           return defaultStatus;
         }
         return status;
