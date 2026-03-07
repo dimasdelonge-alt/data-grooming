@@ -460,13 +460,24 @@ class PdfGenerator {
     String? businessAddress,
     String? logoPath,
     String userPlan = "pro",
+    List<Session> sessions = const [],
+    List<HotelBooking> hotelBookings = const [],
+    List<Expense> manualIncomeEntries = const [],
+    Map<int, String> catNames = const {},
   }) async {
     final doc = pw.Document();
     final font = await PdfGoogleFonts.robotoRegular();
     final boldFont = await PdfGoogleFonts.robotoBold();
     final italicFont = await PdfGoogleFonts.robotoItalic();
+    final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final dateFmt = DateFormat('dd/MM/yyyy');
 
     pw.MemoryImage? logoImage = _loadLogoImage(logoPath);
+
+    // Pre-compute totals
+    final groomingTotal = sessions.fold(0.0, (sum, s) => sum + s.totalCost);
+    final hotelTotal = hotelBookings.fold(0.0, (sum, b) => sum + b.totalCost);
+    final otherTotal = manualIncomeEntries.fold(0.0, (sum, e) => sum + e.amount);
 
     doc.addPage(
       pw.MultiPage(
@@ -477,7 +488,6 @@ class PdfGenerator {
           buildBackground: (pw.Context context) => pw.Stack(
             children: [
               pw.Container(color: PdfColors.white),
-              // Logo Watermark
               if (logoImage != null)
                 pw.Center(
                   child: pw.Opacity(
@@ -500,16 +510,22 @@ class PdfGenerator {
         build: (pw.Context context) {
           return [
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 40),
+              padding: const pw.EdgeInsets.symmetric(horizontal: 24),
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
+                  // ─── Period ──────────────────────────────────
                   pw.Text('Periode: ${DateFormat('MMMM yyyy', 'id_ID').format(month)}',
                       style: pw.TextStyle(font: boldFont, fontSize: 18)),
-                  pw.SizedBox(height: 20),
+                  pw.SizedBox(height: 16),
+
+                  // ─── Summary Box ────────────────────────────
                   pw.Container(
-                    padding: const pw.EdgeInsets.all(10),
-                    decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey300)),
+                    padding: const pw.EdgeInsets.all(12),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey300),
+                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                    ),
                     child: pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                       children: [
@@ -519,23 +535,166 @@ class PdfGenerator {
                       ],
                     ),
                   ),
-                  pw.SizedBox(height: 20),
-                  _buildSectionTitle('RINCIAN PENGELUARAN', _primaryColor, boldFont, padding: 0),
-                  pw.TableHelper.fromTextArray(
-                    context: context,
-                    border: pw.TableBorder.all(color: PdfColors.grey300),
-                    headerStyle: pw.TextStyle(font: boldFont, color: PdfColors.white),
-                    headerDecoration: const pw.BoxDecoration(color: _primaryColor),
-                    cellStyle: pw.TextStyle(font: font, fontSize: 12),
-                    headers: ['Tanggal', 'Keterangan', 'Jumlah'],
-                    data: expenses
-                        .map((e) => [
-                              DateFormat('dd/MM/yyyy').format(DateTime.fromMillisecondsSinceEpoch(e.date)),
-                              e.note,
-                              NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ').format(e.amount),
-                            ])
-                        .toList(),
+                  pw.SizedBox(height: 16),
+
+                  // ─── Category Breakdown ─────────────────────
+                  pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.grey100,
+                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('Ringkasan Pemasukan per Kategori',
+                            style: pw.TextStyle(font: boldFont, fontSize: 13)),
+                        pw.SizedBox(height: 6),
+                        pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text('Grooming (${sessions.length} sesi)',
+                                style: pw.TextStyle(font: font, fontSize: 11)),
+                            pw.Text(fmt.format(groomingTotal),
+                                style: pw.TextStyle(font: boldFont, fontSize: 11)),
+                          ],
+                        ),
+                        pw.SizedBox(height: 3),
+                        pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text('Hotel (${hotelBookings.length} booking)',
+                                style: pw.TextStyle(font: font, fontSize: 11)),
+                            pw.Text(fmt.format(hotelTotal),
+                                style: pw.TextStyle(font: boldFont, fontSize: 11)),
+                          ],
+                        ),
+                        if (manualIncomeEntries.isNotEmpty) ...[
+                          pw.SizedBox(height: 3),
+                          pw.Row(
+                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text('Lainnya (${manualIncomeEntries.length} item)',
+                                  style: pw.TextStyle(font: font, fontSize: 11)),
+                              pw.Text(fmt.format(otherTotal),
+                                  style: pw.TextStyle(font: boldFont, fontSize: 11)),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
+                  pw.SizedBox(height: 20),
+
+                  // ─── Grooming Detail ────────────────────────
+                  if (sessions.isNotEmpty) ...[
+                    _buildSectionTitle('RINCIAN GROOMING', _primaryColor, boldFont, padding: 0),
+                    pw.TableHelper.fromTextArray(
+                      context: context,
+                      border: pw.TableBorder.all(color: PdfColors.grey300),
+                      headerStyle: pw.TextStyle(font: boldFont, color: PdfColors.white, fontSize: 10),
+                      headerDecoration: const pw.BoxDecoration(color: _primaryColor),
+                      cellStyle: pw.TextStyle(font: font, fontSize: 10),
+                      columnWidths: {0: const pw.FlexColumnWidth(2), 1: const pw.FlexColumnWidth(3), 2: const pw.FlexColumnWidth(3), 3: const pw.FlexColumnWidth(2)},
+                      headers: ['Tanggal', 'Kucing', 'Layanan', 'Biaya'],
+                      data: sessions.map((s) => [
+                        dateFmt.format(DateTime.fromMillisecondsSinceEpoch(s.timestamp)),
+                        catNames[s.catId] ?? '#${s.catId}',
+                        s.productsUsed.isNotEmpty ? s.productsUsed : '-',
+                        fmt.format(s.totalCost),
+                      ]).toList(),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Align(
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text('Total Grooming: ${fmt.format(groomingTotal)}',
+                          style: pw.TextStyle(font: boldFont, fontSize: 11)),
+                    ),
+                    pw.SizedBox(height: 16),
+                  ],
+
+                  // ─── Hotel Detail ───────────────────────────
+                  if (hotelBookings.isNotEmpty) ...[
+                    _buildSectionTitle('RINCIAN HOTEL', _primaryColor, boldFont, padding: 0),
+                    pw.TableHelper.fromTextArray(
+                      context: context,
+                      border: pw.TableBorder.all(color: PdfColors.grey300),
+                      headerStyle: pw.TextStyle(font: boldFont, color: PdfColors.white, fontSize: 10),
+                      headerDecoration: const pw.BoxDecoration(color: _primaryColor),
+                      cellStyle: pw.TextStyle(font: font, fontSize: 10),
+                      columnWidths: {0: const pw.FlexColumnWidth(2), 1: const pw.FlexColumnWidth(2), 2: const pw.FlexColumnWidth(3), 3: const pw.FlexColumnWidth(2)},
+                      headers: ['Check-Out', 'Kucing', 'Catatan', 'Biaya'],
+                      data: hotelBookings.map((b) => [
+                        dateFmt.format(DateTime.fromMillisecondsSinceEpoch(b.checkOutDate)),
+                        catNames[b.catId] ?? '#${b.catId}',
+                        b.notes.isNotEmpty ? b.notes : '-',
+                        fmt.format(b.totalCost),
+                      ]).toList(),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Align(
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text('Total Hotel: ${fmt.format(hotelTotal)}',
+                          style: pw.TextStyle(font: boldFont, fontSize: 11)),
+                    ),
+                    pw.SizedBox(height: 16),
+                  ],
+
+                  // ─── Manual Income Detail ───────────────────
+                  if (manualIncomeEntries.isNotEmpty) ...[
+                    _buildSectionTitle('PEMASUKAN LAINNYA', _primaryColor, boldFont, padding: 0),
+                    pw.TableHelper.fromTextArray(
+                      context: context,
+                      border: pw.TableBorder.all(color: PdfColors.grey300),
+                      headerStyle: pw.TextStyle(font: boldFont, color: PdfColors.white, fontSize: 10),
+                      headerDecoration: const pw.BoxDecoration(color: _primaryColor),
+                      cellStyle: pw.TextStyle(font: font, fontSize: 10),
+                      headers: ['Tanggal', 'Keterangan', 'Jumlah'],
+                      data: manualIncomeEntries.map((e) => [
+                        dateFmt.format(DateTime.fromMillisecondsSinceEpoch(e.date)),
+                        e.note,
+                        fmt.format(e.amount),
+                      ]).toList(),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Align(
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text('Total Lainnya: ${fmt.format(otherTotal)}',
+                          style: pw.TextStyle(font: boldFont, fontSize: 11)),
+                    ),
+                    pw.SizedBox(height: 16),
+                  ],
+
+                  // ─── Expense Detail ─────────────────────────
+                  _buildSectionTitle('RINCIAN PENGELUARAN', PdfColors.red800, boldFont, padding: 0),
+                  if (expenses.isEmpty)
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.only(top: 4),
+                      child: pw.Text('Tidak ada pengeluaran bulan ini.',
+                          style: pw.TextStyle(font: italicFont, fontSize: 11, color: PdfColors.grey600)),
+                    )
+                  else ...[
+                    pw.TableHelper.fromTextArray(
+                      context: context,
+                      border: pw.TableBorder.all(color: PdfColors.grey300),
+                      headerStyle: pw.TextStyle(font: boldFont, color: PdfColors.white, fontSize: 10),
+                      headerDecoration: const pw.BoxDecoration(color: PdfColors.red800),
+                      cellStyle: pw.TextStyle(font: font, fontSize: 10),
+                      headers: ['Tanggal', 'Keterangan', 'Kategori', 'Jumlah'],
+                      data: expenses.map((e) => [
+                        dateFmt.format(DateTime.fromMillisecondsSinceEpoch(e.date)),
+                        e.note,
+                        e.category,
+                        fmt.format(e.amount),
+                      ]).toList(),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Align(
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text('Total Pengeluaran: ${fmt.format(expense)}',
+                          style: pw.TextStyle(font: boldFont, fontSize: 11, color: PdfColors.red800)),
+                    ),
+                  ],
                 ],
               ),
             ),

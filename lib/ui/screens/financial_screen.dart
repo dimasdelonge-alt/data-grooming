@@ -239,6 +239,13 @@ class _FinancialScreenState extends State<FinancialScreen> {
         businessAddress: groomingVm.businessAddress,
         logoPath: groomingVm.logoPath,
         userPlan: groomingVm.userPlan,
+        sessions: vm.allTransactions.whereType<Session>().toList(),
+        hotelBookings: vm.allTransactions.whereType<HotelBooking>().toList(),
+        manualIncomeEntries: vm.manualIncomeEntries,
+        catNames: {
+          for (var s in vm.allTransactions.whereType<Session>()) s.catId: vm.getCatName(s.catId),
+          for (var b in vm.allTransactions.whereType<HotelBooking>()) b.catId: vm.getCatName(b.catId),
+        },
       );
     } catch (e) {
       debugPrint('Error printing report: $e');
