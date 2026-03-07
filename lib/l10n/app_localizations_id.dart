@@ -1530,4 +1530,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get deleteIncomeConfirm => 'Hapus pemasukan ini?';
+
+  @override
+  String get syncPending => 'Sinkronisasi Tertunda';
+
+  @override
+  String syncPendingDesc(int count) {
+    return '$count item menunggu untuk di-sync ke cloud. Pastikan koneksi internet aktif.';
+  }
+
+  @override
+  String get retryNow => 'Coba Sekarang';
 }

@@ -1529,4 +1529,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteIncomeConfirm =>
       'Are you sure you want to delete this income?';
+
+  @override
+  String get syncPending => 'Sync Pending';
+
+  @override
+  String syncPendingDesc(int count) {
+    return '$count item(s) waiting to sync to cloud. Make sure your internet is active.';
+  }
+
+  @override
+  String get retryNow => 'Retry Now';
 }

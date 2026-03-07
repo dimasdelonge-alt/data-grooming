@@ -2888,6 +2888,24 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Hapus pemasukan ini?'**
   String get deleteIncomeConfirm;
+
+  /// No description provided for @syncPending.
+  ///
+  /// In id, this message translates to:
+  /// **'Sinkronisasi Tertunda'**
+  String get syncPending;
+
+  /// No description provided for @syncPendingDesc.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} item menunggu untuk di-sync ke cloud. Pastikan koneksi internet aktif.'**
+  String syncPendingDesc(int count);
+
+  /// No description provided for @retryNow.
+  ///
+  /// In id, this message translates to:
+  /// **'Coba Sekarang'**
+  String get retryNow;
 }
 
 class _AppLocalizationsDelegate

@@ -61,7 +61,6 @@
     "alreadyHaveAccount": "Sudah mempunyai akaun? Log Masuk",
     "dontHaveAccount": "Belum ada akaun? Cipta Baru",
     "forgotPasswordAdmin": "Lupa Kata Laluan? Hubungi Admin",
-
     "accountAndBackup": "Akaun & Sandaran",
     "shopSync": "Penyegerakan Kedai",
     "shopConnected": "Kedai Disambungkan",
@@ -86,7 +85,6 @@
     "shopId": "Shop ID",
     "secretKey": "Kunci Rahsia",
     "createNew": "Cipta Baru",
-    "cancel": "Batal",
     "invalidIdOrKey": "ID atau Kunci salah, atau periksa sambungan internet anda.",
     "connect": "Sambung",
     "createNewShop": "Cipta Kedai Baru",
@@ -118,26 +116,21 @@
     "upgradeToProWhatsapp": "Helo Admin, saya ingin menaik taraf aplikasi DataGrooming saya ke PRO. ID Kedai: {shopId}",
     "upgradeToPro": "Naik Taraf ke PRO",
     "planFree": "PERCUMA",
-
     "home": "Laman Utama",
     "activity": "Aktiviti",
     "financial": "Kewangan",
-    "account": "Akaun",
     "quickAction": "Tindakan Pantas",
-    "newSession": "Sesi Baru",
     "hotelCheckIn": "Daftar Masuk Hotel",
-
     "catListCount": "Senarai Kucing ({count})",
     "hideArchived": "Sembunyikan Arkib",
     "viewArchived": "Lihat yang Diarkibkan",
-    "searchCatOrOwner": "Cari kucing atau pemilik...",
+    "searchCatOrOwner": "Cari Kucing / Pemilik",
     "noCatsMatchSearch": "Tiada kucing yang sepadan dengan carian.",
     "noCatDataYet": "Tiada data kucing lagi.",
     "tryAnotherKeyword": "Cuba kata kunci lain.",
     "tapPlusToAddCat": "Ketik butang + untuk menambah kucing.",
     "dataLockedStarterLimit": "Data ini dikunci (Had Starter 15). Sila naik taraf ke PRO!",
     "starterLimit15CatsReached": "Had Starter 15 kucing telah dicapai! Sila naik taraf ke PRO.",
-
     "archiveCatPrompt": "Arkibkan Kucing?",
     "archiveCatDesc": "\"{catName}\" mempunyai sejarah transaksi dan tidak boleh dipadamkan. Dengan mengarkibkan, data kewangan kekal selamat tetapi kucing tidak akan muncul lagi dalam senarai dan peringatan.",
     "archive": "Arkibkan",
@@ -149,13 +142,11 @@
     "deleteFailedHasHistory": "Pemadaman gagal: Kucing ini mempunyai sejarah. Gunakan ciri Arkib.",
     "deleteCatPrompt": "Padam Kucing?",
     "deleteCatDesc": "Adakah anda pasti ingin memadamkan \"{catName}\"? Semua sejarah grooming juga akan dipadamkan.",
-    "delete": "Padam",
     "catDeletedSuccess": "{catName} telah dipadam",
     "catNotFound": "Kucing tidak dijumpai.",
     "groomingHistoryCount": "Sejarah Grooming ({count})",
     "noGroomingHistoryYet": "Tiada sejarah grooming lagi.",
     "information": "Maklumat",
-    "owner": "Pemilik",
     "phone": "Telefon",
     "furColor": "Warna Bulu",
     "eyeColor": "Warna Mata",
@@ -165,13 +156,11 @@
     "isSterileNo": "Belum Steril",
     "loyaltyCompleted": "Tugasan Kesetiaan Selesai! 🎉",
     "groomingReportShare": "Laporan Grooming\nKucing: {catName}\nTarikh: {date}\nKos: {cost}\nNota: {notes}",
-
     "chooseProfilePhoto": "Pilih Foto Profil",
     "camera": "Kamera",
     "gallery": "Galeri",
     "editCat": "Edit Kucing",
     "addCat": "Tambah Kucing",
-    "save": "Simpan",
     "catInfo": "Maklumat Kucing",
     "catNameLabel": "Nama Kucing",
     "weightKg": "Berat (kg)",
@@ -181,7 +170,7 @@
     "yesSterilized": "Ya, sudah steril",
     "notSterilizedYet": "Belum steril",
     "ownerInfo": "Maklumat Pemilik",
-    "ownerPhoneLabel": "No Telefon Pemilik",
+    "ownerPhoneLabel": "No. Telp Pemilik",
     "warning": "Amaran",
     "permanentWarningNote": "Nota Amaran Kekal",
     "warningNoteExample": "Contoh: Agresif, Jantung Lemah",
@@ -194,7 +183,6 @@
     "ownerName": "Nama Pemilik",
     "ownerNameRequired": "Nama Pemilik wajib diisi",
     "searchOrEnterOwnerName": "Cari atau masukkan nama pemilik",
-
     "onlySelectSameOwnerSession": "Hanya boleh pilih sesi daripada pemilik yang sama ({ownerName})",
     "printFailed": "Gagal mencetak: {error}",
     "selectedCount": "{count} dipilih",
@@ -202,14 +190,13 @@
     "printCombinedInvoiceBtn": "Cetak Invois Gabungan",
     "sessionHistoryTitle": "Sejarah Sesi",
     "searchSession": "Cari sesi...",
-    "ownerOnlySessionWarning": "Pemilik: {ownerName} \u2014 hanya sesi dari pemilik ini yang boleh dipilih",
+    "ownerOnlySessionWarning": "Pemilik: {ownerName} — hanya sesi dari pemilik ini yang boleh dipilih",
     "noSessionsYet": "Belum ada sesi.",
     "notFound": "Tidak dijumpai.",
     "tapPlusButtonInCatDetail": "Ketik butang + di butiran kucing.",
     "sessionStarted": "Sesi bermula! Masuk dalam barisan.",
     "groomingCheckIn": "Daftar Masuk Grooming",
     "startNewSession": "Mula Sesi Baru",
-    "searchCatOrOwner": "Cari Kucing / Pemilik",
     "addNewCat": "Tambah Kucing Baru",
     "checkInStartQueue": "Daftar Masuk (Mula Barisan)",
     "currentQueue": "Barisan Semasa ({count})",
@@ -225,8 +212,6 @@
     "bookingGrooming": "Tempahan Grooming",
     "noBookingSchedule": "Tiada jadual tempahan.",
     "addBooking": "Tambah Tempahan",
-    "searchCatOrOwner": "Cari Kucing / Pemilik",
-    "addNewCat": "Tambah Kucing Baru",
     "serviceType": "Jenis Perkhidmatan",
     "deleteSchedule": "Padam Jadual",
     "deleteScheduleConfirm": "Padam jadual ini secara kekal?",
@@ -237,7 +222,6 @@
     "serviceLabel": "Perkhidmatan",
     "whatsappReminder": "Peringatan WhatsApp",
     "checkIn": "Daftar Masuk",
-    "groomingSchedule": "Jadual Grooming",
     "bookingOn": "Tempahan pada {date}",
     "shortMonday": "Isn",
     "shortTuesday": "Sel",
@@ -358,7 +342,6 @@
     "topUpAgain": "Tambah Nilai Lagi",
     "close": "Tutup",
     "sameOwnerOnly": "Hanya boleh pilih transaksi daripada pemilik yang sama ({owner})",
-    "printFailed": "Gagal mencetak: {error}",
     "financialReport": "Laporan Kewangan",
     "printReport": "Cetak Laporan",
     "ownerSameHint": "Pemilik: {owner} — hanya transaksi daripada pemilik ini",
@@ -388,7 +371,6 @@
     "addNew": "Tambah Baru",
     "newCatData": "Data Kucing Baru",
     "ownerNameLabel": "Nama Pemilik",
-    "ownerPhoneLabel": "No. Telp Pemilik",
     "catAddedSuccess": "Kucing berjaya ditambah!",
     "selectDate": "Pilih Tarikh",
     "confirmCheckOut": "Sahkan Daftar Keluar",
@@ -477,14 +459,26 @@
     "passwordChangeFailed": "Gagal menukar kata laluan",
     "allowNegativeBalance": "Izinkan baki negatif (hutang)",
     "balanceWillBecome": "Baki akan menjadi {amount}",
-    "@balanceWillBecome": { "placeholders": { "amount": { "type": "String" } } },
+    "@balanceWillBecome": {
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
     "totalReceivables": "Jumlah Hutang",
     "addIncome": "Tambah Pendapatan",
     "addTransaction": "Tambah Transaksi",
     "otherIncomeLabel": "Lain-lain",
-    "deleteIncomeConfirm": "Padam pendapatan ini?"
+    "deleteIncomeConfirm": "Padam pendapatan ini?",
+    "syncPending": "Penyelarasan Tertangguh",
+    "syncPendingDesc": "{count} item menunggu untuk diselaraskan ke awan. Pastikan sambungan internet aktif.",
+    "@syncPendingDesc": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "retryNow": "Cuba Sekarang"
 }
-
-
-
-

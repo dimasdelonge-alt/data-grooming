@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const String _databaseName = 'grooming_database.db';
-  static const int _databaseVersion = 13;
+  static const int _databaseVersion = 14;
 
   DatabaseHelper._internal();
   static final DatabaseHelper instance = DatabaseHelper._internal();
@@ -202,11 +202,33 @@ class DatabaseHelper {
     ''');
     await db.execute(
         'CREATE INDEX idx_deposit_transactions_ownerPhone ON deposit_transactions(ownerPhone)');
+
+    await db.execute('''
+      CREATE TABLE sync_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        action TEXT NOT NULL,
+        path TEXT NOT NULL,
+        payload TEXT,
+        retryCount INTEGER NOT NULL DEFAULT 0,
+        createdAt INTEGER NOT NULL,
+        lastAttempt INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Keep migration stubs for future use.
-    // The current schema is the full v13 schema created in _onCreate.
-    // If you need incremental migrations for production data, add them here.
+    if (oldVersion < 14) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS sync_queue (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          action TEXT NOT NULL,
+          path TEXT NOT NULL,
+          payload TEXT,
+          retryCount INTEGER NOT NULL DEFAULT 0,
+          createdAt INTEGER NOT NULL,
+          lastAttempt INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+    }
   }
 }

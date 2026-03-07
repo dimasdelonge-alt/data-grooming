@@ -14,15 +14,19 @@ import '../../util/settings_preferences.dart';
 import '../../util/offline_backup_manager.dart';
 import '../../util/image_utils.dart';
 import 'firebase_repository.dart';
+import '../source/sync_queue_manager.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
+import 'dart:convert';
 import '../source/database_helper.dart';
 
 class GroomingRepository {
   final GroomingDao _dao;
   final FirebaseRepository _firebaseRepo;
   final SettingsPreferences _settingsPrefs;
+  final SyncQueueManager syncQueue;
+  Timer? _retryTimer;
 
   // Stream controllers for reactive updates
   final _hotelBookingChangeController = StreamController<void>.broadcast();
@@ -37,15 +41,36 @@ class GroomingRepository {
   final _expenseChangeController = StreamController<void>.broadcast();
   Stream<void> get onExpenseChanged => _expenseChangeController.stream;
 
-  GroomingRepository(this._dao, this._firebaseRepo, this._settingsPrefs);
+  GroomingRepository(this._dao, this._firebaseRepo, this._settingsPrefs, this.syncQueue) {
+    // Auto-retry pending syncs every 30 seconds
+    _retryTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_settingsPrefs.isCloudSyncEnabled && _settingsPrefs.storeId.isNotEmpty) {
+        syncQueue.processQueue();
+      }
+    });
+  }
 
-  void _syncIfEnabled(Future<void> Function(String shopId) action) {
-    if (_settingsPrefs.isCloudSyncEnabled &&
-        _settingsPrefs.storeId.isNotEmpty) {
-      action(_settingsPrefs.storeId).catchError((e) {
-        print('Sync error: $e');
-      });
-    }
+  /// Sync a PUT operation to Firebase. If it fails, enqueue for retry.
+  void _syncPut(String category, String id, Map<String, dynamic> data) {
+    if (!_settingsPrefs.isCloudSyncEnabled || _settingsPrefs.storeId.isEmpty) return;
+    final shopId = _settingsPrefs.storeId;
+    final path = 'sync/$shopId/$category/$id';
+    final payload = jsonEncode(data);
+    _firebaseRepo.syncRaw(path, payload).catchError((e) {
+      print('Sync error (queued): $e');
+      syncQueue.enqueue('PUT', path, payload);
+    });
+  }
+
+  /// Sync a DELETE operation to Firebase. If it fails, enqueue for retry.
+  void _syncDelete(String category, String id) {
+    if (!_settingsPrefs.isCloudSyncEnabled || _settingsPrefs.storeId.isEmpty) return;
+    final shopId = _settingsPrefs.storeId;
+    final path = 'sync/$shopId/$category/$id';
+    _firebaseRepo.deleteRaw(path).catchError((e) {
+      print('Sync delete error (queued): $e');
+      syncQueue.enqueue('DELETE', path, null);
+    });
   }
 
   // ─── Cats ──────────────────────────────────────────────────────────────
@@ -59,18 +84,17 @@ class GroomingRepository {
   Future<void> insertCat(Cat cat) async {
     final newId = await _dao.insertCat(cat);
     final catWithId = cat.copyWith(catId: newId);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncCat(shopId, catWithId));
+    _syncPut('cats', newId.toString(), catWithId.toMap());
   }
 
   Future<void> updateCat(Cat cat) async {
     await _dao.updateCat(cat);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncCat(shopId, cat));
+    _syncPut('cats', cat.catId.toString(), cat.toMap());
   }
 
   Future<void> deleteCat(Cat cat) async {
     await _dao.deleteCat(cat);
-    _syncIfEnabled((shopId) =>
-        _firebaseRepo.deleteFromSync(shopId, 'cats', cat.catId.toString()));
+    _syncDelete('cats', cat.catId.toString());
   }
 
   // ─── Sessions ──────────────────────────────────────────────────────────
@@ -88,14 +112,13 @@ class GroomingRepository {
 
   Future<void> updateSession(Session session) async {
     await _dao.updateSession(session);
-    _syncIfEnabled(
-        (shopId) => _firebaseRepo.syncSession(shopId, session));
+    _syncPut('sessions', session.sessionId.toString(), session.toMap());
     _sessionChangeController.add(null);
   }
 
   Future<void> deleteSession(Session session) async {
     await _dao.deleteSession(session);
-    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'sessions', session.sessionId.toString()));
+    _syncDelete('sessions', session.sessionId.toString());
     _sessionChangeController.add(null);
   }
 
@@ -121,20 +144,19 @@ class GroomingRepository {
   Future<void> insertOption(ChipOption option) async {
     final newId = await _dao.insertOption(option);
     final optionWithId = option.copyWith(id: newId);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncChipOption(shopId, optionWithId));
+    _syncPut('chip_options', newId.toString(), optionWithId.toMap());
   }
 
   Future<void> deleteOption(ChipOption option) async {
     await _dao.deleteOption(option);
-    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'chip_options', option.id.toString()));
+    _syncDelete('chip_options', option.id.toString());
   }
 
   Future<void> insertSessionWithPhotos(
       Session session, List<SessionPhoto> photos) async {
     final newId = await _dao.insertSessionWithPhotos(session, photos);
     final sessionWithId = session.copyWith(sessionId: newId);
-    _syncIfEnabled(
-        (shopId) => _firebaseRepo.syncSession(shopId, sessionWithId));
+    _syncPut('sessions', newId.toString(), sessionWithId.toMap());
     _sessionChangeController.add(null);
   }
 
@@ -147,17 +169,17 @@ class GroomingRepository {
   Future<void> insertBooking(Booking booking) async {
     final newId = await _dao.insertBooking(booking);
     final bookingWithId = booking.copyWith(bookingId: newId);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncGroomingBooking(shopId, bookingWithId));
+    _syncPut('bookings', newId.toString(), bookingWithId.toMap());
   }
 
   Future<void> updateBooking(Booking booking) async {
     await _dao.updateBooking(booking);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncGroomingBooking(shopId, booking));
+    _syncPut('bookings', booking.bookingId.toString(), booking.toMap());
   }
 
   Future<void> deleteBooking(Booking booking) async {
     await _dao.deleteBooking(booking);
-    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'bookings', booking.bookingId.toString()));
+    _syncDelete('bookings', booking.bookingId.toString());
   }
 
   // ─── Services ──────────────────────────────────────────────────────────
@@ -167,17 +189,17 @@ class GroomingRepository {
   Future<void> insertService(GroomingService service) async {
     final newId = await _dao.insertService(service);
     final serviceWithId = service.copyWith(id: newId);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncService(shopId, serviceWithId));
+    _syncPut('services', newId.toString(), serviceWithId.toMap());
   }
 
   Future<void> updateService(GroomingService service) async {
     await _dao.updateService(service);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncService(shopId, service));
+    _syncPut('services', service.id.toString(), service.toMap());
   }
 
   Future<void> deleteService(GroomingService service) async {
     await _dao.deleteService(service);
-    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'services', service.id.toString()));
+    _syncDelete('services', service.id.toString());
   }
 
   // ─── Hotel Financials ──────────────────────────────────────────────────
@@ -205,17 +227,17 @@ class GroomingRepository {
   Future<void> insertRoom(HotelRoom room) async {
     final newId = await _dao.insertRoom(room);
     final roomWithId = room.copyWith(id: newId);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelRoom(shopId, roomWithId));
+    _syncPut('hotel_rooms', newId.toString(), roomWithId.toMap());
   }
 
   Future<void> updateRoom(HotelRoom room) async {
     await _dao.updateRoom(room);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelRoom(shopId, room));
+    _syncPut('hotel_rooms', room.id.toString(), room.toMap());
   }
 
   Future<void> deleteRoom(HotelRoom room) async {
     await _dao.deleteRoom(room);
-    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'hotel_rooms', room.id.toString()));
+    _syncDelete('hotel_rooms', room.id.toString());
   }
 
   Stream<List<HotelBooking>> getActiveHotelBookings() => _dao.getActiveHotelBookings();
@@ -225,19 +247,19 @@ class GroomingRepository {
   Future<void> insertHotelBooking(HotelBooking booking) async {
     final newId = await _dao.insertHotelBooking(booking);
     final bookingWithId = booking.copyWith(id: newId);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelBooking(shopId, bookingWithId));
+    _syncPut('hotel_bookings', newId.toString(), bookingWithId.toMap());
     _hotelBookingChangeController.add(null);
   }
 
   Future<void> updateHotelBooking(HotelBooking booking) async {
     await _dao.updateHotelBooking(booking);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelBooking(shopId, booking));
+    _syncPut('hotel_bookings', booking.id.toString(), booking.toMap());
     _hotelBookingChangeController.add(null);
   }
 
   Future<void> deleteHotelBookingById(int id) async {
     await _dao.deleteHotelBookingById(id);
-    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'hotel_bookings', id.toString()));
+    _syncDelete('hotel_bookings', id.toString());
     _hotelBookingChangeController.add(null);
   }
   Future<List<HotelBooking>> checkRoomAvailability(int roomId, int start, int end) => _dao.checkRoomAvailability(roomId, start, end);
@@ -248,12 +270,12 @@ class GroomingRepository {
   Future<void> insertAddOn(HotelAddOn addOn) async {
     final newId = await _dao.insertAddOn(addOn);
     final addOnWithId = addOn.copyWith(id: newId);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncHotelAddOn(shopId, addOnWithId));
+    _syncPut('hotel_adds', newId.toString(), addOnWithId.toMap());
   }
 
   Future<void> deleteAddOn(HotelAddOn addOn) async {
     await _dao.deleteAddOn(addOn);
-    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'hotel_adds', addOn.id.toString()));
+    _syncDelete('hotel_adds', addOn.id.toString());
   }
 
   // ─── Expense Tracking ──────────────────────────────────────────────────
@@ -273,13 +295,13 @@ class GroomingRepository {
   Future<void> insertExpense(Expense expense) async {
     final newId = await _dao.insertExpense(expense);
     final expenseWithId = expense.copyWith(id: newId);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncExpense(shopId, expenseWithId));
+    _syncPut('expenses', newId.toString(), expenseWithId.toMap());
     _expenseChangeController.add(null);
   }
 
   Future<void> deleteExpense(Expense expense) async {
     await _dao.deleteExpense(expense);
-    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'expenses', expense.id.toString()));
+    _syncDelete('expenses', expense.id.toString());
     _expenseChangeController.add(null);
   }
 
@@ -290,33 +312,33 @@ class GroomingRepository {
   
   Future<void> insertDeposit(OwnerDeposit deposit) async {
     await _dao.insertDeposit(deposit);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncOwnerDeposit(shopId, deposit));
+    _syncPut('owner_deposits', deposit.ownerPhone, deposit.toMap());
   }
   
   Future<void> updateDeposit(OwnerDeposit deposit) async {
     await _dao.updateDeposit(deposit);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncOwnerDeposit(shopId, deposit));
+    _syncPut('owner_deposits', deposit.ownerPhone, deposit.toMap());
   }
   
   Stream<List<DepositTransaction>> getDepositTransactions(String phone) => _dao.getDepositTransactions(phone);
   
   Future<void> insertDepositTransaction(DepositTransaction txn) async {
     await _dao.insertDepositTransaction(txn);
-    _syncIfEnabled((shopId) => _firebaseRepo.syncDepositTransaction(shopId, txn));
+    _syncPut('deposit_transactions', txn.id.toString(), txn.toMap());
   }
   
   Future<List<DepositTransaction>> getDepositTransactionsForRef(int refId) => _dao.getTransactionsByReferenceId(refId);
   
   Future<void> deleteDeposit(OwnerDeposit deposit) async {
     await _dao.deleteDeposit(deposit);
-    _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'owner_deposits', deposit.ownerPhone));
+    _syncDelete('owner_deposits', deposit.ownerPhone);
   }
   
   Future<void> deleteDepositTransactions(String phone) async {
     final txns = await _dao.getDepositTransactions(phone).first;
     await _dao.deleteDepositTransactions(phone);
     for (final t in txns) {
-      _syncIfEnabled((shopId) => _firebaseRepo.deleteFromSync(shopId, 'deposit_transactions', t.id.toString()));
+      _syncDelete('deposit_transactions', t.id.toString());
     }
   }
   // ─── Cloud Restore ─────────────────────────────────────────────────────

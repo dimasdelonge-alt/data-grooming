@@ -216,11 +216,23 @@ class _DashboardBodyState extends State<_DashboardBody> {
             ),
             Row(
               children: [
+                // Sync status indicator
+              if (vm.pendingSyncCount > 0)
+                Badge.count(
+                  count: vm.pendingSyncCount,
+                  backgroundColor: Colors.orange,
+                  offset: const Offset(-6, 6),
+                  child: IconButton(
+                    onPressed: () => _showSyncDialog(context, vm, l10n),
+                    icon: const Icon(Icons.cloud_off_rounded, color: Colors.orange),
+                    tooltip: 'Sync pending',
+                  ),
+                ),
                 // Notification bell with badge (V2 Style)
                 Badge.count(
                   count: urgentCount,
                   isLabelVisible: urgentCount > 0,
-                  offset: const Offset(-6, 6), // Pull it closer to the bell
+                  offset: const Offset(-6, 6),
                   child: IconButton(
                     onPressed: () => _showReminders(context, vm, l10n),
                     icon: const Icon(Icons.notifications_rounded, color: Colors.white),
@@ -638,6 +650,38 @@ class _DashboardBodyState extends State<_DashboardBody> {
     ).then((_) {
       vm.markNotificationsAsRead();
     });
+  }
+
+  void _showSyncDialog(BuildContext context, GroomingViewModel vm, AppLocalizations l10n) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.cloud_off_rounded, color: Colors.orange, size: 24),
+              const SizedBox(width: 8),
+              Text(l10n.syncPending),
+            ],
+          ),
+          content: Text(l10n.syncPendingDesc(vm.pendingSyncCount)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.close),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                vm.retrySyncNow();
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(l10n.retryNow),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

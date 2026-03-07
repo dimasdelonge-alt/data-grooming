@@ -54,12 +54,14 @@ class GroomingViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _processedImagePath;
   String? _weatherIconUrl;
+  int _pendingSyncCount = 0;
   
   // Stream Subscriptions
   StreamSubscription? _sessionSub;
   StreamSubscription? _bookingSub;
   StreamSubscription? _expenseSub;
   StreamSubscription? _restoreSub;
+  StreamSubscription? _syncQueueSub;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ═══════════════════════════════════════════════════════════════════════════
@@ -79,6 +81,7 @@ class GroomingViewModel extends ChangeNotifier {
   bool get isProcessingImage => _isProcessingImage;
   bool get isLoading => _isLoading;
   String? get weatherIconUrl => _weatherIconUrl;
+  int get pendingSyncCount => _pendingSyncCount;
 
   ThemeMode get themeMode {
     switch (_settingsPrefs.theme) {
@@ -266,6 +269,7 @@ class GroomingViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       await _repository.uploadAllDataToCloud(_settingsPrefs.businessName, _settingsPrefs.businessInfo);
+      await _repository.syncQueue.clearAll();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -387,6 +391,11 @@ class GroomingViewModel extends ChangeNotifier {
     _bookingSub = _repository.onHotelBookingChanged.listen((_) => _loadDashboardStats());
     _expenseSub = _repository.onExpenseChanged.listen((_) => _loadDashboardStats());
     _restoreSub = _repository.onDataRestored.listen((_) => refreshAll());
+    _syncQueueSub = _repository.syncQueue.pendingCountStream.listen((count) {
+      _pendingSyncCount = count;
+      notifyListeners();
+    });
+    _pendingSyncCount = _repository.syncQueue.pendingCount;
   }
 
   @override
@@ -395,7 +404,12 @@ class GroomingViewModel extends ChangeNotifier {
     _bookingSub?.cancel();
     _expenseSub?.cancel();
     _restoreSub?.cancel();
+    _syncQueueSub?.cancel();
     super.dispose();
+  }
+
+  Future<void> retrySyncNow() async {
+    await _repository.syncQueue.processQueue();
   }
 
   Future<void> refreshAll() async {

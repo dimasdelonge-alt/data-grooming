@@ -1532,4 +1532,15 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get deleteIncomeConfirm => 'Padam pendapatan ini?';
+
+  @override
+  String get syncPending => 'Penyelarasan Tertangguh';
+
+  @override
+  String syncPendingDesc(int count) {
+    return '$count item menunggu untuk diselaraskan ke awan. Pastikan sambungan internet aktif.';
+  }
+
+  @override
+  String get retryNow => 'Cuba Sekarang';
 }

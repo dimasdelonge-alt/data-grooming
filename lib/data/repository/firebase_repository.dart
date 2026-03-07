@@ -287,6 +287,29 @@ class FirebaseRepository {
     }
   }
 
+  /// Raw PUT for sync queue compatibility.
+  /// [path] is relative, e.g. 'sync/shopId/cats/14'
+  Future<void> syncRaw(String path, String jsonPayload) async {
+    final response = await http.put(
+      Uri.parse('$_baseUrl/$path.json'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonPayload,
+    );
+    if (response.statusCode >= 400) {
+      throw Exception('syncRaw failed: HTTP ${response.statusCode}');
+    }
+  }
+
+  /// Raw DELETE for sync queue compatibility.
+  Future<void> deleteRaw(String path) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/$path.json'),
+    );
+    if (response.statusCode >= 400) {
+      throw Exception('deleteRaw failed: HTTP ${response.statusCode}');
+    }
+  }
+
   Future<CloudSyncData?> fetchAllSyncData(String shopId) async {
     if (shopId.isEmpty) return null;
     try {

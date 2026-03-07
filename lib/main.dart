@@ -11,6 +11,7 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import 'data/source/database_helper.dart';
 import 'data/source/grooming_dao.dart';
+import 'data/source/sync_queue_manager.dart';
 import 'data/repository/grooming_repository.dart';
 import 'data/repository/firebase_repository.dart';
 import 'util/settings_preferences.dart';
@@ -64,7 +65,9 @@ void main() async {
   final settingsPrefs = SettingsPreferences(prefs);
   final firebaseRepo = FirebaseRepository();
   final dao = GroomingDao(DatabaseHelper.instance);
-  final repository = GroomingRepository(dao, firebaseRepo, settingsPrefs);
+  final syncQueue = SyncQueueManager(DatabaseHelper.instance);
+  await syncQueue.init();
+  final repository = GroomingRepository(dao, firebaseRepo, settingsPrefs, syncQueue);
 
   runApp(
     MultiProvider(

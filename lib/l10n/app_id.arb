@@ -38,17 +38,21 @@
     "seeAll": "Lihat Semua",
     "groomingSchedule": "Jadwal Grooming",
     "noReschedule": "Tidak ada jadwal ulang",
-    "owner": "Owner",
+    "owner": "Pemilik",
     "sessionsCountLabel": "{count} sesi",
     "@sessionsCountLabel": {
         "placeholders": {
-            "count": { "type": "int" }
+            "count": {
+                "type": "int"
+            }
         }
     },
     "daysAgoLabel": "{days} hari lalu",
     "@daysAgoLabel": {
         "placeholders": {
-            "days": { "type": "int" }
+            "days": {
+                "type": "int"
+            }
         }
     },
     "errEmptyShopIdPassword": "Shop ID dan Password harus diisi",
@@ -56,7 +60,9 @@
     "errDeviceLimit": "Login ditolak: Limit perangkat tercapai ({count} device).\\nSilakan upgrade ke PRO untuk akses lebih banyak.",
     "@errDeviceLimit": {
         "placeholders": {
-            "count": { "type": "int" }
+            "count": {
+                "type": "int"
+            }
         }
     },
     "errWrongPassword": "Password salah",
@@ -68,19 +74,25 @@
     "errShopIdTaken": "Shop ID \"{shopId}\" sudah dipakai, coba yang lain",
     "@errShopIdTaken": {
         "placeholders": {
-            "shopId": { "type": "String" }
+            "shopId": {
+                "type": "String"
+            }
         }
     },
     "errCreateAccount": "Gagal membuat akun: {error}",
     "@errCreateAccount": {
         "placeholders": {
-            "error": { "type": "String" }
+            "error": {
+                "type": "String"
+            }
         }
     },
     "msgForgotPwdWithId": "Halo, saya lupa password SmartGroomer. Shop ID saya: {shopId}",
     "@msgForgotPwdWithId": {
         "placeholders": {
-            "shopId": { "type": "String" }
+            "shopId": {
+                "type": "String"
+            }
         }
     },
     "msgForgotPwd": "Halo, saya lupa password SmartGroomer.",
@@ -94,7 +106,6 @@
     "alreadyHaveAccount": "Sudah punya akun? Masuk",
     "dontHaveAccount": "Belum punya akun? Buat Baru",
     "forgotPasswordAdmin": "Lupa Password? Hubungi Admin",
-
     "accountAndBackup": "Akun & Backup",
     "shopSync": "Sinkronisasi Toko",
     "shopConnected": "Toko Terhubung",
@@ -102,7 +113,9 @@
     "shopIdValue": "ID: {shopId}",
     "@shopIdValue": {
         "placeholders": {
-            "shopId": { "type": "String" }
+            "shopId": {
+                "type": "String"
+            }
         }
     },
     "notConnectedToShop": "Belum terhubung ke toko",
@@ -124,7 +137,6 @@
     "shopId": "Shop ID",
     "secretKey": "Secret Key",
     "createNew": "Buat Baru",
-    "cancel": "Batal",
     "invalidIdOrKey": "ID atau Key salah, atau periksa koneksi internet.",
     "connect": "Hubungkan",
     "createNewShop": "Buat Toko Baru",
@@ -135,7 +147,9 @@
     "shopCreatedSuccess": "Toko berhasil dibuat! ID: {shopId}",
     "@shopCreatedSuccess": {
         "placeholders": {
-            "shopId": { "type": "String" }
+            "shopId": {
+                "type": "String"
+            }
         }
     },
     "shopCreatedFail": "Gagal membuat toko. Periksa koneksi.",
@@ -156,86 +170,133 @@
     "statusValue": "Status: {plan}",
     "@statusValue": {
         "placeholders": {
-            "plan": { "type": "String" }
+            "plan": {
+                "type": "String"
+            }
         }
     },
     "checkStatus": "Cek Status",
     "validUntilValue": "Berlaku Sampai: {date}",
     "@validUntilValue": {
         "placeholders": {
-            "date": { "type": "String" }
+            "date": {
+                "type": "String"
+            }
         }
     },
     "deviceLimitValue": "Limit Perangkat: {count}",
     "@deviceLimitValue": {
         "placeholders": {
-            "count": { "type": "int" }
+            "count": {
+                "type": "int"
+            }
         }
     },
     "deviceIdValue": "Device ID: {deviceId}",
     "@deviceIdValue": {
         "placeholders": {
-            "deviceId": { "type": "String" }
+            "deviceId": {
+                "type": "String"
+            }
         }
     },
     "upgradeToProWhatsapp": "Halo Admin, saya ingin upgrade aplikasi DataGrooming saya ke PRO. ID Toko: {shopId}",
     "@upgradeToProWhatsapp": {
         "placeholders": {
-            "shopId": { "type": "String" }
+            "shopId": {
+                "type": "String"
+            }
         }
     },
     "upgradeToPro": "Tingkatkan ke PRO",
     "planFree": "GRATIS",
-
     "home": "Beranda",
     "activity": "Aktivitas",
     "financial": "Keuangan",
-    "account": "Akun",
     "quickAction": "Aksi Cepat",
-    "newSession": "Sesi Baru",
     "hotelCheckIn": "Check-in Hotel",
-
     "catListCount": "Daftar Kucing ({count})",
     "@catListCount": {
         "placeholders": {
-            "count": { "type": "int" }
+            "count": {
+                "type": "int"
+            }
         }
     },
     "hideArchived": "Sembunyikan Arsip",
     "viewArchived": "Lihat Terarsip",
-    "searchCatOrOwner": "Cari kucing atau owner...",
+    "searchCatOrOwner": "Cari Kucing / Owner",
     "noCatsMatchSearch": "Tidak ada kucing yang cocok dengan pencarian.",
     "noCatDataYet": "Belum ada data kucing.",
     "tryAnotherKeyword": "Coba kata kunci lain.",
     "tapPlusToAddCat": "Tap tombol + untuk menambah kucing.",
     "dataLockedStarterLimit": "Data ini terkunci (Limit Starter 15). Silakan upgrade ke PRO!",
     "starterLimit15CatsReached": "Batas Starter 15 kucing tercapai! Silakan upgrade ke PRO!",
-
     "archiveCatPrompt": "Arsipkan Kucing?",
     "archiveCatDesc": "\"{catName}\" memiliki riwayat transaksi dan tidak bisa dihapus. Dengan mengarsipkan, data keuangan tetap aman namun kucing tidak akan muncul lagi di daftar dan pengingat.",
-    "@archiveCatDesc": { "placeholders": { "catName": { "type": "String" } } },
+    "@archiveCatDesc": {
+        "placeholders": {
+            "catName": {
+                "type": "String"
+            }
+        }
+    },
     "archive": "Arsipkan",
     "catArchivedSuccess": "{catName} telah diarsipkan",
-    "@catArchivedSuccess": { "placeholders": { "catName": { "type": "String" } } },
+    "@catArchivedSuccess": {
+        "placeholders": {
+            "catName": {
+                "type": "String"
+            }
+        }
+    },
     "unarchiveCatPrompt": "Aktifkan Kembali?",
     "unarchiveCatDesc": "Apakah Anda ingin memulihkan \"{catName}\"? Kucing ini akan muncul kembali di daftar aktif.",
-    "@unarchiveCatDesc": { "placeholders": { "catName": { "type": "String" } } },
+    "@unarchiveCatDesc": {
+        "placeholders": {
+            "catName": {
+                "type": "String"
+            }
+        }
+    },
     "unarchive": "Aktifkan",
     "catUnarchivedSuccess": "{catName} telah diaktifkan kembali",
-    "@catUnarchivedSuccess": { "placeholders": { "catName": { "type": "String" } } },
+    "@catUnarchivedSuccess": {
+        "placeholders": {
+            "catName": {
+                "type": "String"
+            }
+        }
+    },
     "deleteFailedHasHistory": "Hapus gagal: Kucing ini memiliki riwayat. Gunakan fitur Arsip.",
     "deleteCatPrompt": "Hapus Kucing?",
     "deleteCatDesc": "Apakah Anda yakin ingin menghapus \"{catName}\"? Semua riwayat grooming juga akan dihapus.",
-    "@deleteCatDesc": { "placeholders": { "catName": { "type": "String" } } },
-    "delete": "Hapus",
+    "@deleteCatDesc": {
+        "placeholders": {
+            "catName": {
+                "type": "String"
+            }
+        }
+    },
     "catDeletedSuccess": "{catName} telah dihapus",
-    "@catDeletedSuccess": { "placeholders": { "catName": { "type": "String" } } },
+    "@catDeletedSuccess": {
+        "placeholders": {
+            "catName": {
+                "type": "String"
+            }
+        }
+    },
     "catNotFound": "Kucing tidak ditemukan.",
     "groomingHistoryCount": "Riwayat Grooming ({count})",
-    "@groomingHistoryCount": { "placeholders": { "count": { "type": "int" } } },
+    "@groomingHistoryCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
     "noGroomingHistoryYet": "Belum ada riwayat grooming.",
     "information": "Informasi",
-    "owner": "Pemilik",
     "phone": "Telepon",
     "furColor": "Warna Bulu",
     "eyeColor": "Warna Mata",
@@ -247,19 +308,25 @@
     "groomingReportShare": "Grooming Report\nKucing: {catName}\nTanggal: {date}\nBiaya: {cost}\nCatatan: {notes}",
     "@groomingReportShare": {
         "placeholders": {
-            "catName": { "type": "String" },
-            "date": { "type": "String" },
-            "cost": { "type": "String" },
-            "notes": { "type": "String" }
+            "catName": {
+                "type": "String"
+            },
+            "date": {
+                "type": "String"
+            },
+            "cost": {
+                "type": "String"
+            },
+            "notes": {
+                "type": "String"
+            }
         }
     },
-
     "chooseProfilePhoto": "Pilih Foto Profil",
     "camera": "Kamera",
     "gallery": "Galeri",
     "editCat": "Edit Kucing",
     "addCat": "Tambah Kucing",
-    "save": "Simpan",
     "catInfo": "Info Kucing",
     "catNameLabel": "Nama Kucing",
     "weightKg": "Berat Badan (kg)",
@@ -269,7 +336,7 @@
     "yesSterilized": "Ya, sudah steril",
     "notSterilizedYet": "Belum steril",
     "ownerInfo": "Info Pemilik",
-    "ownerPhoneLabel": "No. Telepon Pemilik",
+    "ownerPhoneLabel": "No. Telp Pemilik",
     "warning": "Peringatan",
     "permanentWarningNote": "Catatan Peringatan Permanen",
     "warningNoteExample": "Contoh: Galak, Jantung Lemah",
@@ -278,54 +345,116 @@
     "updateCat": "Update Kucing",
     "saveCat": "Simpan Kucing",
     "fieldRequired": "{field} wajib diisi",
-    "@fieldRequired": { "placeholders": { "field": { "type": "String" } } },
+    "@fieldRequired": {
+        "placeholders": {
+            "field": {
+                "type": "String"
+            }
+        }
+    },
     "enterField": "Masukkan {field}",
-    "@enterField": { "placeholders": { "field": { "type": "String" } } },
+    "@enterField": {
+        "placeholders": {
+            "field": {
+                "type": "String"
+            }
+        }
+    },
     "ownerName": "Nama Pemilik",
     "ownerNameRequired": "Nama Pemilik wajib diisi",
     "searchOrEnterOwnerName": "Cari atau masukkan nama pemilik",
-
     "onlySelectSameOwnerSession": "Hanya bisa memilih session dari pemilik yang sama ({ownerName})",
-    "@onlySelectSameOwnerSession": { "placeholders": { "ownerName": { "type": "String" } } },
+    "@onlySelectSameOwnerSession": {
+        "placeholders": {
+            "ownerName": {
+                "type": "String"
+            }
+        }
+    },
     "printFailed": "Gagal mencetak: {error}",
-    "@printFailed": { "placeholders": { "error": { "type": "String" } } },
+    "@printFailed": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
     "selectedCount": "{count} dipilih",
-    "@selectedCount": { "placeholders": { "count": { "type": "int" } } },
+    "@selectedCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
     "selectAllOwner": "Pilih Semua (owner {ownerName})",
-    "@selectAllOwner": { "placeholders": { "ownerName": { "type": "String" } } },
+    "@selectAllOwner": {
+        "placeholders": {
+            "ownerName": {
+                "type": "String"
+            }
+        }
+    },
     "printCombinedInvoiceBtn": "Cetak Invoice Gabungan",
     "sessionHistoryTitle": "Riwayat Session",
     "searchSession": "Cari session...",
-    "ownerOnlySessionWarning": "Owner: {ownerName} \u2014 hanya session dari owner ini yang bisa dipilih",
-    "@ownerOnlySessionWarning": { "placeholders": { "ownerName": { "type": "String" } } },
+    "ownerOnlySessionWarning": "Owner: {ownerName} — hanya session dari owner ini yang bisa dipilih",
+    "@ownerOnlySessionWarning": {
+        "placeholders": {
+            "ownerName": {
+                "type": "String"
+            }
+        }
+    },
     "noSessionsYet": "Belum ada session.",
     "notFound": "Tidak ditemukan.",
     "tapPlusButtonInCatDetail": "Tap tombol + di detail kucing.",
     "sessionStarted": "Sesi dimulai! Masuk antrian.",
     "groomingCheckIn": "Grooming Check-In",
     "startNewSession": "Mulai Sesi Baru",
-    "searchCatOrOwner": "Cari Kucing / Owner",
     "addNewCat": "Tambah Kucing Baru",
     "checkInStartQueue": "Check In (Mulai Antrian)",
     "currentQueue": "Antrian Saat Ini ({count})",
-    "@currentQueue": { "placeholders": { "count": { "type": "int" } } },
+    "@currentQueue": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
     "noActiveQueue": "Tidak ada antrian aktif.",
     "unknownCat": "Kucing Tidak Diketahui",
     "setShopIdInSettings": "Silakan atur Shop ID di Settings",
     "trackingTokenNotAvailable": "Error: Token tracking belum tersedia",
     "whatsappTrackingMessage": "Hai kak {ownerName} 👋\n\nUntuk memantau proses grooming {catName} sampai di tahap mana, bisa langsung dicek di link berikut ya:\n{link}\n\nTerima kasih sudah mempercayakan kami! 🐱✨",
-    "@whatsappTrackingMessage": { "placeholders": { "ownerName": { "type": "String" }, "catName": { "type": "String" }, "link": { "type": "String" } } },
+    "@whatsappTrackingMessage": {
+        "placeholders": {
+            "ownerName": {
+                "type": "String"
+            },
+            "catName": {
+                "type": "String"
+            },
+            "link": {
+                "type": "String"
+            }
+        }
+    },
     "whatsapp": "WhatsApp",
     "ownerLabel": "Owner: {ownerName}",
-    "@ownerLabel": { "placeholders": { "ownerName": { "type": "String" } } },
+    "@ownerLabel": {
+        "placeholders": {
+            "ownerName": {
+                "type": "String"
+            }
+        }
+    },
     "add": "Tambah",
     "breed": "Ras / Jenis",
     "shareLink": "Share Link",
     "bookingGrooming": "Booking Grooming",
     "noBookingSchedule": "Tidak ada jadwal booking.",
     "addBooking": "Tambah Booking",
-    "searchCatOrOwner": "Cari Kucing / Owner",
-    "addNewCat": "Tambah Kucing Baru",
     "serviceType": "Jenis Layanan",
     "deleteSchedule": "Hapus Jadwal",
     "deleteScheduleConfirm": "Hapus jadwal ini secara permanen?",
@@ -336,9 +465,14 @@
     "serviceLabel": "Layanan",
     "whatsappReminder": "WhatsApp Reminder",
     "checkIn": "Check-In",
-    "groomingSchedule": "Jadwal Grooming",
     "bookingOn": "Booking pada {date}",
-    "@bookingOn": { "placeholders": { "date": { "type": "String" } } },
+    "@bookingOn": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
     "shortMonday": "Sen",
     "shortTuesday": "Sel",
     "shortWednesday": "Rab",
@@ -358,9 +492,21 @@
     "totalCost": "Total Biaya",
     "payFromDeposit": "Bayar dari Deposit",
     "balanceStr": "Saldo: {balance}",
-    "@balanceStr": { "placeholders": { "balance": { "type": "String" } } },
+    "@balanceStr": {
+        "placeholders": {
+            "balance": {
+                "type": "String"
+            }
+        }
+    },
     "balanceNotEnoughDeduct": "Saldo kurang, akan dipotong {deductedAmount}",
-    "@balanceNotEnoughDeduct": { "placeholders": { "deductedAmount": { "type": "String" } } },
+    "@balanceNotEnoughDeduct": {
+        "placeholders": {
+            "deductedAmount": {
+                "type": "String"
+            }
+        }
+    },
     "sessionDetail": "Session Detail",
     "printInvoice": "Cetak Invoice",
     "catDataNotFound": "Data kucing tidak ditemukan",
@@ -392,7 +538,9 @@
     "editBookingFor": "Edit Booking: {catName}",
     "@editBookingFor": {
         "placeholders": {
-            "catName": { "type": "String" }
+            "catName": {
+                "type": "String"
+            }
         }
     },
     "checkInDate": "Tanggal Masuk",
@@ -407,7 +555,9 @@
     "countCats": "{count} Kucing",
     "@countCats": {
         "placeholders": {
-            "count": { "type": "int" }
+            "count": {
+                "type": "int"
+            }
         }
     },
     "addRoom": "Tambah Kamar",
@@ -469,7 +619,6 @@
     "topUpAgain": "Top Up Lagi",
     "close": "Tutup",
     "sameOwnerOnly": "Hanya bisa memilih transaksi dari pemilik yang sama ({owner})",
-    "printFailed": "Gagal mencetak: {error}",
     "financialReport": "Laporan Keuangan",
     "printReport": "Cetak Laporan",
     "ownerSameHint": "Owner: {owner} — hanya transaksi dari owner ini",
@@ -499,7 +648,6 @@
     "addNew": "Tambah Baru",
     "newCatData": "Data Kucing Baru",
     "ownerNameLabel": "Nama Pemilik",
-    "ownerPhoneLabel": "No. Telp Pemilik",
     "catAddedSuccess": "Kucing berhasil ditambahkan!",
     "selectDate": "Pilih Tanggal",
     "confirmCheckOut": "Konfirmasi Check Out",
@@ -588,14 +736,26 @@
     "passwordChangeFailed": "Gagal mengubah password",
     "allowNegativeBalance": "Izinkan saldo minus (hutang)",
     "balanceWillBecome": "Saldo akan menjadi {amount}",
-    "@balanceWillBecome": { "placeholders": { "amount": { "type": "String" } } },
+    "@balanceWillBecome": {
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
     "totalReceivables": "Total Piutang",
     "addIncome": "Tambah Pemasukan",
     "addTransaction": "Tambah Transaksi",
     "otherIncomeLabel": "Lainnya",
-    "deleteIncomeConfirm": "Hapus pemasukan ini?"
+    "deleteIncomeConfirm": "Hapus pemasukan ini?",
+    "syncPending": "Sinkronisasi Tertunda",
+    "syncPendingDesc": "{count} item menunggu untuk di-sync ke cloud. Pastikan koneksi internet aktif.",
+    "@syncPendingDesc": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "retryNow": "Coba Sekarang"
 }
-
-
-
-
