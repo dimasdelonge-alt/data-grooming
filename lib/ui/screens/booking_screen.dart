@@ -76,7 +76,7 @@ class _BookingScreenState extends State<BookingScreen> {
     Cat? selectedCat;
     DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
     TimeOfDay selectedTime = const TimeOfDay(hour: 9, minute: 0);
-    final serviceController = TextEditingController(text: 'Mandi Sehat');
+    final serviceController = TextEditingController();
     final notesController = TextEditingController();
 
     showDialog(
@@ -187,7 +187,59 @@ class _BookingScreenState extends State<BookingScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  TextField(controller: serviceController, decoration: InputDecoration(labelText: l10n.serviceType)),
+                  Autocomplete<String>(
+                    optionsBuilder: (textEditingValue) {
+                      if (textEditingValue.text.isEmpty) {
+                        return vm.services.map((s) => s.serviceName);
+                      }
+                      return vm.services
+                          .where((s) => s.serviceName.toLowerCase().contains(textEditingValue.text.toLowerCase()))
+                          .map((s) => s.serviceName);
+                    },
+                    onSelected: (selection) => serviceController.text = selection,
+                    fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                      // Sync initial empty or typed value back to our main controller
+                      controller.text = serviceController.text;
+                      controller.addListener(() {
+                        serviceController.text = controller.text;
+                      });
+                      return TextFormField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        decoration: InputDecoration(
+                          labelText: l10n.serviceType,
+                          prefixIcon: const Icon(Icons.dry_cleaning_rounded),
+                        ),
+                        onFieldSubmitted: (value) => onFieldSubmitted(),
+                      );
+                    },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(12),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 200, maxWidth: 280),
+                            child: ListView.separated(
+                              padding: EdgeInsets.zero,
+                              shrinkWrap: true,
+                              itemCount: options.length,
+                              separatorBuilder: (c, i) => const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final option = options.elementAt(index);
+                                return ListTile(
+                                  title: Text(option),
+                                  onDoubleTap: () => onSelected(option),
+                                  onTap: () => onSelected(option),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 12),
                   TextField(controller: notesController, decoration: InputDecoration(labelText: l10n.notes), maxLines: 2),
                 ],
