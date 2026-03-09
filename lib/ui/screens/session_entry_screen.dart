@@ -116,7 +116,8 @@ class _CheckInViewState extends State<_CheckInView> {
             c.ownerName.toLowerCase().contains(query)).toList();
 
     // Show all cats when dropdown expanded but no search text
-    final displayCats = (query.isEmpty && _showDropdown) ? cats : filtered;
+    final displayCatsRaw = (query.isEmpty && _showDropdown) ? cats : filtered;
+    final displayCats = vm.userPlan == 'starter' ? displayCatsRaw.take(15).toList() : displayCatsRaw;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.groomingCheckIn)),

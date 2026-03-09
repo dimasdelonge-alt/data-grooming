@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import '../entity/cat.dart';
 import '../entity/session.dart';
 import '../entity/hotel_entities.dart';
@@ -26,9 +27,14 @@ class FirebaseRepository {
   }) async {
     if (shopId.isEmpty || session.trackingToken == null) return;
 
+    final dateStr = DateFormat('yyyy-MM-dd HH:mm').format(
+      DateTime.fromMillisecondsSinceEpoch(session.updatedAt),
+    );
+
     final trackingData = {
       'status': session.status,
       'updatedAt': session.updatedAt,
+      'updatedAtReadable': dateStr,
       'catName': catName,
       'treatment': session.treatment.join(', '),
       'estimatedCost': session.totalCost,

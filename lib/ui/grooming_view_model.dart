@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:crypto/crypto.dart';
 import '../data/repository/grooming_repository.dart';
 import '../data/repository/firebase_repository.dart';
@@ -376,6 +377,7 @@ class GroomingViewModel extends ChangeNotifier {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _init() {
+    refreshSubscription(); // Refresh plan status on startup
     _loadCats();
     _loadSessions();
     _loadServices();
@@ -591,6 +593,10 @@ class GroomingViewModel extends ChangeNotifier {
   // ═══════════════════════════════════════════════════════════════════════════
 
   Future<void> addCat(Cat cat) async {
+    if (userPlan == 'starter' && _allCats.length >= 15) {
+      // Limit reached for starter plan
+      return;
+    }
     await _repository.insertCat(cat);
     _loadCats();
   }
@@ -633,13 +639,21 @@ class GroomingViewModel extends ChangeNotifier {
 
   Future<void> addSession(Session session, List<SessionPhoto> photos) async {
     try {
-      await _repository.insertSessionWithPhotos(session, photos);
+      if (userPlan == 'starter' && _currentMonthSessionCount >= 50) {
+        // Limit reached for starter plan
+        return;
+      }
 
-      if (session.status != 'DONE') {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final sessionWithTime = session.copyWith(updatedAt: now);
+
+      await _repository.insertSessionWithPhotos(sessionWithTime, photos);
+
+      if (sessionWithTime.status != 'DONE') {
         final shopId = _settingsPrefs.storeId;
-        final cat = await _repository.getCatById(session.catId);
+        final cat = await _repository.getCatById(sessionWithTime.catId);
         if (shopId.isNotEmpty && cat != null) {
-          await _firebaseRepo.updateTrackingStatus(shopId, session, cat.catName);
+          await _firebaseRepo.updateTrackingStatus(shopId, sessionWithTime, cat.catName);
         }
       }
       _loadSessions(); // Refresh UI
@@ -675,13 +689,16 @@ class GroomingViewModel extends ChangeNotifier {
         }
       }
 
-      await _repository.updateSession(session);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final sessionWithTime = session.copyWith(updatedAt: now);
+
+      await _repository.updateSession(sessionWithTime);
 
       final shopId = _settingsPrefs.storeId;
-      final cat = await _repository.getCatById(session.catId);
-      if (shopId.isNotEmpty && cat != null && session.trackingToken != null) {
+      final cat = await _repository.getCatById(sessionWithTime.catId);
+      if (shopId.isNotEmpty && cat != null && sessionWithTime.trackingToken != null) {
         await _firebaseRepo.updateTrackingStatus(
-          shopId, session, cat.catName,
+          shopId, sessionWithTime, cat.catName,
           missedHistory: missedHistory,
         );
       }
@@ -853,11 +870,10 @@ class GroomingViewModel extends ChangeNotifier {
       final now = DateTime.now().millisecondsSinceEpoch;
       final twelveHoursAgo = now - (12 * 60 * 60 * 1000);
 
-      final toCleanup = sessions.where((s) =>
-          s.status == 'DONE' &&
-          s.updatedAt > 0 &&
-          s.updatedAt < twelveHoursAgo &&
-          s.trackingToken != null);
+      final toCleanup = sessions.where((s) {
+        final effectiveTime = math.max(s.updatedAt, s.timestamp);
+        return effectiveTime < twelveHoursAgo && s.trackingToken != null;
+      });
 
       if (toCleanup.isEmpty) return;
 
@@ -867,7 +883,8 @@ class GroomingViewModel extends ChangeNotifier {
       for (final session in toCleanup) {
         await _firebaseRepo.deleteTrackingStatus(shopId, session.trackingToken!);
         await _repository.updateSession(
-            session.copyWith(trackingToken: null));
+          session.copyWith(trackingToken: null),
+        );
       }
     } catch (e) {
       debugPrint('cleanupOldSessions error: $e');

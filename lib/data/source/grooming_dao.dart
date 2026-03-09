@@ -49,7 +49,11 @@ class GroomingDao {
 
   Future<int> insertCat(Cat cat) async {
     final db = await _db;
-    return await db.insert('cats', cat.toMap(),
+    final map = cat.toMap();
+    if (map['catId'] == 0 || map['catId'] == null) {
+      map.remove('catId');
+    }
+    return await db.insert('cats', map,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -84,7 +88,11 @@ class GroomingDao {
 
   Future<int> insertSession(Session session) async {
     final db = await _db;
-    return await db.insert('sessions', session.toMap(),
+    final map = session.toMap();
+    if (map['sessionId'] == 0 || map['sessionId'] == null) {
+      map.remove('sessionId');
+    }
+    return await db.insert('sessions', map,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -193,12 +201,20 @@ class GroomingDao {
       Session session, List<SessionPhoto> photos) async {
     final db = await _db;
     return await db.transaction((txn) async {
-      final sessionId = await txn.insert('sessions', session.toMap(),
+      final map = session.toMap();
+      if (map['sessionId'] == 0 || map['sessionId'] == null) {
+        map.remove('sessionId');
+      }
+      final sessionId = await txn.insert('sessions', map,
           conflictAlgorithm: ConflictAlgorithm.replace);
       for (final photo in photos) {
+        final photoMap = photo.copyWith(sessionId: sessionId).toMap();
+        if (photoMap['photoId'] == 0 || photoMap['photoId'] == null) {
+          photoMap.remove('photoId');
+        }
         await txn.insert(
           'session_photos',
-          photo.copyWith(sessionId: sessionId).toMap(),
+          photoMap,
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
@@ -219,7 +235,11 @@ class GroomingDao {
 
   Future<int> insertBooking(Booking booking) async {
     final db = await _db;
-    return await db.insert('bookings', booking.toMap(),
+    final map = booking.toMap();
+    if (map['bookingId'] == 0 || map['bookingId'] == null) {
+      map.remove('bookingId');
+    }
+    return await db.insert('bookings', map,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -248,7 +268,11 @@ class GroomingDao {
 
   Future<int> insertService(GroomingService service) async {
     final db = await _db;
-    return await db.insert('grooming_services', service.toMap(),
+    final map = service.toMap();
+    if (map['id'] == 0 || map['id'] == null) {
+      map.remove('id');
+    }
+    return await db.insert('grooming_services', map,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -349,7 +373,11 @@ class GroomingDao {
 
   Future<int> insertRoom(HotelRoom room) async {
     final db = await _db;
-    return await db.insert('hotel_rooms', room.toMap(),
+    final map = room.toMap();
+    if (map['id'] == 0 || map['id'] == null) {
+      map.remove('id');
+    }
+    return await db.insert('hotel_rooms', map,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -382,7 +410,11 @@ class GroomingDao {
 
   Future<int> insertHotelBooking(HotelBooking booking) async {
     final db = await _db;
-    return await db.insert('hotel_bookings', booking.toMap(),
+    final map = booking.toMap();
+    if (map['id'] == 0 || map['id'] == null) {
+      map.remove('id');
+    }
+    return await db.insert('hotel_bookings', map,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -506,7 +538,11 @@ class GroomingDao {
 
   Future<int> insertAddOn(HotelAddOn addOn) async {
     final db = await _db;
-    return await db.insert('hotel_addons', addOn.toMap(),
+    final map = addOn.toMap();
+    if (map['id'] == 0 || map['id'] == null) {
+      map.remove('id');
+    }
+    return await db.insert('hotel_addons', map,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -559,7 +595,11 @@ class GroomingDao {
 
   Future<int> insertExpense(Expense expense) async {
     final db = await _db;
-    return await db.insert('expenses', expense.toMap(),
+    final map = expense.toMap();
+    if (map['id'] == 0 || map['id'] == null) {
+      map.remove('id');
+    }
+    return await db.insert('expenses', map,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -581,7 +621,11 @@ class GroomingDao {
 
   Future<int> insertOption(ChipOption option) async {
     final db = await _db;
-    return await db.insert('chip_options', option.toMap(),
+    final map = option.toMap();
+    if (map['id'] == 0 || map['id'] == null) {
+      map.remove('id');
+    }
+    return await db.insert('chip_options', map,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
