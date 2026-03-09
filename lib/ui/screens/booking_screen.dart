@@ -230,7 +230,6 @@ class _BookingScreenState extends State<BookingScreen> {
                                 final option = options.elementAt(index);
                                 return ListTile(
                                   title: Text(option),
-                                  onDoubleTap: () => onSelected(option),
                                   onTap: () => onSelected(option),
                                 );
                               },
