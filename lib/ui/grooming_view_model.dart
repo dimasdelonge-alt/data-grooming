@@ -20,6 +20,7 @@ import '../util/offline_backup_manager.dart';
 import '../util/notification_service.dart';
 import '../data/repository/weather_repository.dart';
 import '../data/entity/hotel_entities.dart';
+import '../data/entity/global_message.dart';
 
 class GroomingViewModel extends ChangeNotifier {
   final GroomingRepository _repository;
@@ -56,6 +57,7 @@ class GroomingViewModel extends ChangeNotifier {
   String? _processedImagePath;
   String? _weatherIconUrl;
   int _pendingSyncCount = 0;
+  GlobalMessage? _globalMessage;
   
   // Stream Subscriptions
   StreamSubscription? _sessionSub;
@@ -83,6 +85,7 @@ class GroomingViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get weatherIconUrl => _weatherIconUrl;
   int get pendingSyncCount => _pendingSyncCount;
+  GlobalMessage? get globalMessage => _globalMessage;
 
   ThemeMode get themeMode {
     switch (_settingsPrefs.theme) {
@@ -387,6 +390,7 @@ class GroomingViewModel extends ChangeNotifier {
     _loadReminders();
     _cleanupOldSessions();
     _fetchWeather();
+    _loadGlobalMessage();
 
     // Set up reactive listeners
     _sessionSub = _repository.onSessionChanged.listen((_) => _loadDashboardStats());
@@ -434,6 +438,20 @@ class GroomingViewModel extends ChangeNotifier {
       _weatherIconUrl = url;
       notifyListeners();
     }
+  }
+
+  void _loadGlobalMessage() async {
+    final msg = await _firebaseRepo.getGlobalMessage();
+    if (msg != null && msg.isActive) {
+      _globalMessage = msg;
+      notifyListeners();
+    }
+  }
+
+  void markGlobalMessageAsDismissed(String id) {
+    _settingsPrefs.setDismissedMessageId(id);
+    _globalMessage = null;
+    notifyListeners();
   }
 
   void _loadCats() {

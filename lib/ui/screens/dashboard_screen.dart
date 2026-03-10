@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/scheduler.dart';
 import '../grooming_view_model.dart';
 import '../financial_view_model.dart';
 import '../theme/theme.dart';
@@ -36,6 +37,34 @@ class _DashboardBodyState extends State<_DashboardBody> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 900;
     
+    // Check for global message
+    if (vm.globalMessage != null) {
+      final msg = vm.globalMessage!;
+      if (vm.settingsPrefs.dismissedMessageId != msg.id) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          showDialog(
+            context: context,
+            barrierDismissible: msg.dismissible,
+            builder: (ctx) => AlertDialog(
+              title: Text(msg.title),
+              content: Text(msg.body),
+              actions: [
+                if (msg.dismissible)
+                  FilledButton(
+                    onPressed: () {
+                      vm.markGlobalMessageAsDismissed(msg.id);
+                      Navigator.pop(ctx);
+                    },
+                    child: Text(l10n.close ?? 'OK'),
+                  ),
+              ],
+            ),
+          );
+        });
+      }
+    }
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : null,
       body: CustomScrollView(

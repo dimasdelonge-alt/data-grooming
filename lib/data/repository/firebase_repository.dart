@@ -10,6 +10,7 @@ import '../entity/expense.dart';
 import '../entity/chip_option.dart';
 import '../entity/deposit_entities.dart';
 import '../model/cloud_sync_data.dart';
+import '../entity/global_message.dart';
 
 class FirebaseRepository {
   static const String _baseUrl =
@@ -575,6 +576,28 @@ class FirebaseRepository {
     } catch (e) {
       print('updateSubscription error: $e');
       return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GLOBAL ADMIN MESSAGE (POPUP)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<GlobalMessage?> getGlobalMessage() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/global_message.json'),
+      );
+      if (response.statusCode == 200 && response.body != 'null') {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          return GlobalMessage.fromMap(decoded);
+        }
+      }
+      return null;
+    } catch (e) {
+      print('getGlobalMessage error: $e');
+      return null;
     }
   }
 }
