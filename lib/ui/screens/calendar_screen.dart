@@ -61,6 +61,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.groomingSchedule)),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => BookingScreen.showBookingDialog(context, vm, cats, l10n, initialDate: _selectedDate),
+        child: const Icon(Icons.add_rounded),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [

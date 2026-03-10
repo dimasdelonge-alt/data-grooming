@@ -28,7 +28,7 @@ class _BookingScreenState extends State<BookingScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.bookingGrooming)),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showBookingDialog(context, vm, cats, l10n),
+        onPressed: () => BookingScreen.showBookingDialog(context, vm, cats, l10n),
         child: const Icon(Icons.add_rounded),
       ),
       body: upcoming.isEmpty
@@ -72,9 +72,9 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   // ─── Add Booking Dialog ────────────────────────────────
-  void _showBookingDialog(BuildContext context, GroomingViewModel vm, List<Cat> cats, AppLocalizations l10n) {
+  static void showBookingDialog(BuildContext context, GroomingViewModel vm, List<Cat> cats, AppLocalizations l10n, {DateTime? initialDate}) {
     Cat? selectedCat;
-    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    DateTime selectedDate = initialDate ?? DateTime.now().add(const Duration(days: 1));
     TimeOfDay selectedTime = const TimeOfDay(hour: 9, minute: 0);
     final serviceController = TextEditingController();
     final notesController = TextEditingController();
