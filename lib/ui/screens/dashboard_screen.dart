@@ -28,6 +28,8 @@ class _DashboardBody extends StatefulWidget {
 }
 
 class _DashboardBodyState extends State<_DashboardBody> {
+  bool _isDialogShowing = false;
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<GroomingViewModel>();
@@ -40,7 +42,8 @@ class _DashboardBodyState extends State<_DashboardBody> {
     // Check for global message
     if (vm.globalMessage != null) {
       final msg = vm.globalMessage!;
-      if (vm.settingsPrefs.dismissedMessageId != msg.id) {
+      if (vm.settingsPrefs.dismissedMessageId != msg.id && !_isDialogShowing) {
+        _isDialogShowing = true;
         SchedulerBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           showDialog(
@@ -54,13 +57,18 @@ class _DashboardBodyState extends State<_DashboardBody> {
                   FilledButton(
                     onPressed: () {
                       vm.markGlobalMessageAsDismissed(msg.id);
+                      _isDialogShowing = false;
                       Navigator.pop(ctx);
                     },
                     child: Text(l10n.close ?? 'OK'),
                   ),
               ],
             ),
-          );
+          ).then((_) {
+            if (mounted) {
+              setState(() => _isDialogShowing = false);
+            }
+          });
         });
       }
     }
