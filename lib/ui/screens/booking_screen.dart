@@ -14,62 +14,6 @@ class BookingScreen extends StatefulWidget {
 
   @override
   State<BookingScreen> createState() => _BookingScreenState();
-}
-
-class _BookingScreenState extends State<BookingScreen> {
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final vm = context.watch<GroomingViewModel>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final upcoming = vm.upcomingBookings;
-    final cats = vm.allCats;
-
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.bookingGrooming)),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => BookingScreen.showBookingDialog(context, vm, cats, l10n),
-        child: const Icon(Icons.add_rounded),
-      ),
-      body: upcoming.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.calendar_today_rounded, size: 64, color: isDark ? Colors.white24 : Colors.black12),
-                  const SizedBox(height: 12),
-                  Text(l10n.noBookingSchedule, style: TextStyle(color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext)),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: upcoming.length,
-              itemBuilder: (context, index) {
-                final booking = upcoming[index];
-                final cat = cats.where((c) => c.catId == booking.catId).firstOrNull;
-                return BookingCard(
-                  booking: booking,
-                  catName: cat?.catName ?? l10n.unknown,
-                  ownerName: cat?.ownerName ?? l10n.unknown,
-                  isDark: isDark,
-                  l10n: l10n,
-                  onCheckIn: () {
-                    vm.updateBookingStatus(booking, 'COMPLETED');
-                    Navigator.pushNamed(context, '/session_entry', arguments: {'catId': booking.catId});
-                  },
-                  onWhatsApp: (cat != null && cat.ownerPhone.isNotEmpty)
-                      ? () => sendWhatsAppReminder(cat, booking)
-                      : null,
-                  onConfirm: () => vm.updateBookingStatus(booking, 'CONFIRMED'),
-                  onCancel: () => vm.updateBookingStatus(booking, 'CANCELLED'),
-                  onReschedule: () => _showRescheduleDialog(context, vm, booking, l10n),
-                  onDelete: () => _showDeleteDialog(context, vm, booking, l10n),
-                );
-              },
-            ),
-    );
-  }
 
   // ─── Add Booking Dialog ────────────────────────────────
   static void showBookingDialog(BuildContext context, GroomingViewModel vm, List<Cat> cats, AppLocalizations l10n, {DateTime? initialDate}) {
@@ -267,6 +211,62 @@ class _BookingScreenState extends State<BookingScreen> {
           );
         });
       },
+    );
+  }
+}
+
+class _BookingScreenState extends State<BookingScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final vm = context.watch<GroomingViewModel>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final upcoming = vm.upcomingBookings;
+    final cats = vm.allCats;
+
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.bookingGrooming)),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => BookingScreen.showBookingDialog(context, vm, cats, l10n),
+        child: const Icon(Icons.add_rounded),
+      ),
+      body: upcoming.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_today_rounded, size: 64, color: isDark ? Colors.white24 : Colors.black12),
+                  const SizedBox(height: 12),
+                  Text(l10n.noBookingSchedule, style: TextStyle(color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext)),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: upcoming.length,
+              itemBuilder: (context, index) {
+                final booking = upcoming[index];
+                final cat = cats.where((c) => c.catId == booking.catId).firstOrNull;
+                return BookingCard(
+                  booking: booking,
+                  catName: cat?.catName ?? l10n.unknown,
+                  ownerName: cat?.ownerName ?? l10n.unknown,
+                  isDark: isDark,
+                  l10n: l10n,
+                  onCheckIn: () {
+                    vm.updateBookingStatus(booking, 'COMPLETED');
+                    Navigator.pushNamed(context, '/session_entry', arguments: {'catId': booking.catId});
+                  },
+                  onWhatsApp: (cat != null && cat.ownerPhone.isNotEmpty)
+                      ? () => sendWhatsAppReminder(cat, booking)
+                      : null,
+                  onConfirm: () => vm.updateBookingStatus(booking, 'CONFIRMED'),
+                  onCancel: () => vm.updateBookingStatus(booking, 'CANCELLED'),
+                  onReschedule: () => _showRescheduleDialog(context, vm, booking, l10n),
+                  onDelete: () => _showDeleteDialog(context, vm, booking, l10n),
+                );
+              },
+            ),
     );
   }
 
