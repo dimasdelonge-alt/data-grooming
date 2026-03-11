@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:flutter/scheduler.dart';
 import '../grooming_view_model.dart';
 import '../financial_view_model.dart';
+import 'dart:ui';
 import '../theme/theme.dart';
 import '../common/cat_avatar.dart';
+import '../common/mini_sparkline.dart';
 import '../../data/entity/cat.dart';
 import '../../data/entity/session.dart';
 import '../../util/date_utils.dart' as app_date;
@@ -197,10 +199,6 @@ class _DashboardBodyState extends State<_DashboardBody> {
     return Container(
       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface.withValues(alpha: 0.5) : null,
-        border: isDark 
-            ? Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 0.5))
-            : null,
         gradient: LinearGradient(
           colors: isDark
               ? [AppColors.darkBackground, AppColors.darkSurface.withValues(alpha: 0.8)]
@@ -246,26 +244,24 @@ class _DashboardBodyState extends State<_DashboardBody> {
                   vm.businessName.isEmpty ? l10n.businessNamePlaceholder : vm.businessName,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                 ),
               ],
             ),
             Row(
               children: [
-                // Sync status indicator
-              if (vm.pendingSyncCount > 0)
-                Badge.count(
-                  count: vm.pendingSyncCount,
-                  backgroundColor: Colors.orange,
-                  offset: const Offset(-6, 6),
-                  child: IconButton(
-                    onPressed: () => _showSyncDialog(context, vm, l10n),
-                    icon: const Icon(Icons.cloud_off_rounded, color: Colors.orange),
-                    tooltip: 'Sync pending',
+                if (vm.pendingSyncCount > 0)
+                  Badge.count(
+                    count: vm.pendingSyncCount,
+                    backgroundColor: Colors.orange,
+                    offset: const Offset(-6, 6),
+                    child: IconButton(
+                      onPressed: () => _showSyncDialog(context, vm, l10n),
+                      icon: const Icon(Icons.cloud_off_rounded, color: Colors.orange),
+                      tooltip: 'Sync pending',
+                    ),
                   ),
-                ),
-                // Notification bell with badge (V2 Style)
                 Badge.count(
                   count: urgentCount,
                   isLabelVisible: urgentCount > 0,
@@ -346,22 +342,58 @@ class _DashboardBodyState extends State<_DashboardBody> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              app_date.formatCurrencyDouble(vm.currentMonthNetProfit),
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: vm.currentMonthNetProfit >= 0
-                        ? (isDark ? AppColors.accentGreen : const Color(0xFF2E7D32))
-                        : Colors.redAccent,
-                    shadows: isDark && vm.currentMonthNetProfit > 0
-                        ? [
-                            Shadow(
-                              color: AppColors.accentGreen.withValues(alpha: 0.5),
-                              blurRadius: 12,
-                            )
-                          ]
-                        : null,
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        app_date.formatCurrencyDouble(vm.currentMonthNetProfit),
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: vm.currentMonthNetProfit >= 0
+                                  ? (isDark ? AppColors.accentGreen : const Color(0xFF2E7D32))
+                                  : Colors.redAccent,
+                              shadows: isDark && vm.currentMonthNetProfit > 0
+                                  ? [
+                                      Shadow(
+                                        color: AppColors.accentGreen.withOpacity(0.4),
+                                        blurRadius: 15,
+                                      )
+                                    ]
+                                  : null,
+                            ),
+                      ),
+                      if (vm.currentMonthNetProfit > 0) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.trending_up, size: 14, color: AppColors.accentGreen),
+                            const SizedBox(width: 4),
+                            Text(
+                              '+12.5% vs last month', // Placeholder logic for now
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? AppColors.accentGreen.withOpacity(0.8) : Colors.green,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
+                ),
+                MiniSparkline(
+                  data: const [10, 15, 12, 25, 18, 22, 30], // Mock trend data
+                  color: isDark ? AppColors.accentGreen : const Color(0xFF2E7D32),
+                  width: 120,
+                  height: 50,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Row(
