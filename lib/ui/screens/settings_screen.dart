@@ -301,8 +301,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Card(
               child: ListTile(
                 leading: Icon(Icons.info_outline),
-                title: Text('Data Groomer App'),
-                subtitle: Text('v13.0 (Stable)'),
+                title: Text('Data Grooming App'),
+                subtitle: const Text('v14.0 (Stable)'),
                 // legacy admin tap logic removed
               ),
             ),
