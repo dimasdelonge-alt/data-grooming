@@ -14,6 +14,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../util/whatsapp_utils.dart';
 import '../../util/phone_number_utils.dart';
 import 'package:datagrooming_v3/l10n/app_localizations.dart';
+import '../common/success_dialog.dart';
 
 /// Grooming session entry screen.
 ///
@@ -579,8 +580,25 @@ class _EditSessionViewState extends State<_EditSessionView> {
       }
     }
 
+    final isCompleting = _session!.status != 'DONE' && _currentStatus == 'DONE';
+
     await vm.updateSession(updatedSession);
-    if (mounted) Navigator.pop(context);
+    
+    if (mounted) {
+      if (isCompleting) {
+        // Show the "Wah" Success Animation!
+        SuccessDialog.show(
+          context,
+          title: 'Meow-velous! 🐾',
+          message: 'Sesi grooming selesai dan tercatat sebagai pendapatan baru. Kerja bagus!',
+          onConfirm: () {
+            if (mounted) Navigator.pop(context);
+          },
+        );
+      } else {
+        Navigator.pop(context);
+      }
+    }
   }
 
   Future<void> _delete(AppLocalizations l10n) async {
