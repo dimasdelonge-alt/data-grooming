@@ -50,6 +50,9 @@ class GroomingViewModel extends ChangeNotifier {
   String _searchQuery = '';
   double _currentMonthIncome = 0.0;
   double _currentMonthExpense = 0.0;
+  double _lastMonthIncome = 0.0;
+  double _lastMonthExpense = 0.0;
+  List<double> _profitTrendData = [10, 15, 12, 25, 18, 22, 30]; // Initial mock, will be updated
   int _currentMonthSessionCount = 0;
   bool _showArchivedCats = false;
   bool _isProcessingImage = false;
@@ -122,6 +125,16 @@ class GroomingViewModel extends ChangeNotifier {
   double get currentMonthIncome => _currentMonthIncome;
   double get currentMonthExpense => _currentMonthExpense;
   double get currentMonthNetProfit => _currentMonthIncome - _currentMonthExpense;
+  double get lastMonthNetProfit => _lastMonthIncome - _lastMonthExpense;
+
+  double get profitGrowthPct {
+    final prev = lastMonthNetProfit;
+    if (prev == 0) return currentMonthNetProfit > 0 ? 100.0 : 0.0;
+    return ((currentMonthNetProfit - prev) / prev.abs()) * 100.0;
+  }
+
+  List<double> get profitTrendData => _profitTrendData;
+
   int get currentMonthSessionCount => _currentMonthSessionCount;
   String get currentMonthName => app_date.getCurrentMonthName();
   SettingsPreferences get settingsPrefs => _settingsPrefs;
@@ -496,10 +509,11 @@ class GroomingViewModel extends ChangeNotifier {
     });
   }
 
-  void _loadDashboardStats() {
+  void _loadDashboardStats() async {
     final startOfMonth = app_date.getStartOfCurrentMonth();
     final endOfMonth = app_date.getEndOfCurrentMonth();
 
+    // Current Month
     _repository.getCombinedIncomeByDateRange(startOfMonth, endOfMonth).listen((income) {
       _currentMonthIncome = income ?? 0.0;
       notifyListeners();
@@ -512,6 +526,35 @@ class GroomingViewModel extends ChangeNotifier {
       _currentMonthSessionCount = count;
       notifyListeners();
     });
+
+    // Last Month
+    final now = DateTime.now();
+    final startOfLastMonth = DateTime(now.year, now.month - 1, 1).millisecondsSinceEpoch;
+    final endOfLastMonth = DateTime(now.year, now.month, 0, 23, 59, 59).millisecondsSinceEpoch;
+
+    _repository.getCombinedIncomeByDateRange(startOfLastMonth, endOfLastMonth).listen((income) {
+      _lastMonthIncome = income ?? 0.0;
+      notifyListeners();
+    });
+    _repository.getTotalExpenseByDateRange(startOfLastMonth, endOfLastMonth).listen((expense) {
+      _lastMonthExpense = expense ?? 0.0;
+      notifyListeners();
+    });
+
+    // Trend (Last 7 days)
+    final List<double> trend = [];
+    for (int i = 6; i >= 0; i--) {
+      final day = DateTime.now().subtract(Duration(days: i));
+      final startOfDay = DateTime(day.year, day.month, day.day).millisecondsSinceEpoch;
+      final endOfDay = DateTime(day.year, day.month, day.day, 23, 59, 59).millisecondsSinceEpoch;
+      
+      final income = await _repository.getCombinedIncomeByDateRange(startOfDay, endOfDay).first;
+      final expense = await _repository.getTotalExpenseByDateRange(startOfDay, endOfDay).first;
+      
+      trend.add((income ?? 0.0) - (expense ?? 0.0));
+    }
+    _profitTrendData = trend;
+    notifyListeners();
   }
 
   void _loadReminders() {

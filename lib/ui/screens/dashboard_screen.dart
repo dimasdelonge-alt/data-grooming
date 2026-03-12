@@ -7,6 +7,7 @@ import 'dart:ui';
 import '../theme/theme.dart';
 import '../common/cat_avatar.dart';
 import '../common/mini_sparkline.dart';
+import '../common/animated_counter.dart';
 import '../../data/entity/cat.dart';
 import '../../data/entity/session.dart';
 import '../../util/date_utils.dart' as app_date;
@@ -300,148 +301,172 @@ class _DashboardBodyState extends State<_DashboardBody> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _buildStatsCard(BuildContext context, GroomingViewModel vm, bool isDark, AppLocalizations l10n) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: isDark ? BorderSide(color: Colors.white.withValues(alpha: 0.05), width: 1) : BorderSide.none,
-      ),
-      color: isDark ? AppColors.darkCard : Colors.white,
-      shadowColor: isDark && vm.currentMonthNetProfit > 0 
-          ? AppColors.accentGreen.withValues(alpha: 0.2)
-          : null,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Hero(
+      tag: 'financial_card',
+      flightShuttleBuilder: (flightContext, animation, flightDirection, fromHeroContext, toHeroContext) {
+        return Material(
+          type: MaterialType.transparency,
+          child: flightDirection == HeroFlightDirection.push
+              ? fromHeroContext.widget
+              : toHeroContext.widget,
+        );
+      },
+      child: Material(
+        type: MaterialType.transparency,
+        child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: isDark ? BorderSide(color: Colors.white.withValues(alpha: 0.05), width: 1) : BorderSide.none,
+        ),
+        color: isDark ? AppColors.darkCard : Colors.white,
+        shadowColor: isDark && vm.currentMonthNetProfit > 0 
+            ? AppColors.accentGreen.withValues(alpha: 0.2)
+            : null,
+        child: InkWell(
+          onTap: () => Navigator.pushNamed(context, '/financial'),
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${l10n.netProfit} ${vm.currentMonthName}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
-                      ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: (isDark ? AppColors.accentGreen : AppColors.lightPrimary).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    l10n.sessionsCountLabel(vm.currentMonthSessionCount),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.accentGreen : AppColors.lightPrimary,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${l10n.netProfit} ${vm.currentMonthName}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
+                          ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        app_date.formatCurrencyDouble(vm.currentMonthNetProfit),
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: vm.currentMonthNetProfit >= 0
-                                  ? (isDark ? AppColors.accentGreen : const Color(0xFF2E7D32))
-                                  : Colors.redAccent,
-                              shadows: isDark && vm.currentMonthNetProfit > 0
-                                  ? [
-                                      Shadow(
-                                        color: AppColors.accentGreen.withOpacity(0.4),
-                                        blurRadius: 15,
-                                      )
-                                    ]
-                                  : null,
-                            ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: (isDark ? AppColors.accentGreen : AppColors.lightPrimary).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      if (vm.currentMonthNetProfit > 0) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.trending_up, size: 14, color: AppColors.accentGreen),
-                            const SizedBox(width: 4),
-                            Text(
-                              '+12.5% vs last month', // Placeholder logic for now
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? AppColors.accentGreen.withOpacity(0.8) : Colors.green,
-                                fontWeight: FontWeight.w600,
-                              ),
+                      child: Text(
+                        l10n.sessionsCountLabel(vm.currentMonthSessionCount),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.accentGreen : AppColors.lightPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AnimatedCounter(
+                            value: vm.currentMonthNetProfit,
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: vm.currentMonthNetProfit >= 0
+                                      ? (isDark ? AppColors.accentGreen : const Color(0xFF2E7D32))
+                                      : Colors.redAccent,
+                                  shadows: isDark && vm.currentMonthNetProfit > 0
+                                      ? [
+                                          Shadow(
+                                            color: AppColors.accentGreen.withOpacity(0.4),
+                                            blurRadius: 15,
+                                          )
+                                        ]
+                                      : null,
+                                ),
+                          ),
+                          if (vm.currentMonthNetProfit != 0 || vm.lastMonthNetProfit != 0) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  vm.profitGrowthPct >= 0 ? Icons.trending_up : Icons.trending_down,
+                                  size: 14,
+                                  color: vm.profitGrowthPct >= 0 ? AppColors.accentGreen : Colors.redAccent,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${vm.profitGrowthPct >= 0 ? "+" : ""}${vm.profitGrowthPct.toStringAsFixed(1)}% vs last month',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: vm.profitGrowthPct >= 0 
+                                        ? (isDark ? AppColors.accentGreen.withOpacity(0.8) : Colors.green)
+                                        : Colors.redAccent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                MiniSparkline(
-                  data: const [10, 15, 12, 25, 18, 22, 30], // Mock trend data
-                  color: isDark ? AppColors.accentGreen : const Color(0xFF2E7D32),
-                  width: 120,
-                  height: 50,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _statMini(
-                  context,
-                  Icons.arrow_upward_rounded,
-                  const Color(0xFF66BB6A),
-                  l10n.income,
-                  app_date.formatCurrencyDouble(vm.currentMonthIncome),
-                ),
-                const SizedBox(width: 24),
-                _statMini(
-                  context,
-                  Icons.arrow_downward_rounded,
-                  const Color(0xFFEF5350),
-                  l10n.expense,
-                  app_date.formatCurrencyDouble(vm.currentMonthExpense),
-                ),
-              ],
-            ),
-            // Total Piutang (receivables from negative deposit balances)
-            Builder(
-              builder: (context) {
-                final finVm = context.watch<FinancialViewModel>();
-                if (finVm.totalReceivables <= 0) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Row(
-                    children: [
-                      Icon(Icons.warning_amber_rounded, size: 14, color: Colors.red.withOpacity(0.7)),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${l10n.totalReceivables}: ${app_date.formatCurrencyDouble(finVm.totalReceivables)}',
-                        style: TextStyle(fontSize: 11, color: Colors.red.withOpacity(0.8), fontWeight: FontWeight.w500),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                    MiniSparkline(
+                      data: vm.profitTrendData,
+                      color: isDark ? AppColors.accentGreen : const Color(0xFF2E7D32),
+                      width: 120,
+                      height: 50,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _statMini(
+                      context,
+                      Icons.arrow_upward_rounded,
+                      const Color(0xFF66BB6A),
+                      l10n.income,
+                      vm.currentMonthIncome,
+                    ),
+                    const SizedBox(width: 24),
+                    _statMini(
+                      context,
+                      Icons.arrow_downward_rounded,
+                      const Color(0xFFEF5350),
+                      l10n.expense,
+                      vm.currentMonthExpense,
+                    ),
+                  ],
+                ),
+                // Total Piutang
+                Builder(
+                  builder: (context) {
+                    final finVm = context.watch<FinancialViewModel>();
+                    if (finVm.totalReceivables <= 0) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, size: 14, color: Colors.red.withOpacity(0.7)),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${l10n.totalReceivables}: ${app_date.formatCurrencyDouble(finVm.totalReceivables)}',
+                            style: TextStyle(fontSize: 11, color: Colors.red.withOpacity(0.8), fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
+          ),
+        ),
         ),
       ),
     );
   }
 
-  Widget _statMini(BuildContext context, IconData icon, Color color, String label, String value) {
+  Widget _statMini(BuildContext context, IconData icon, Color color, String label, double value) {
     return Expanded(
       child: Row(
         children: [
@@ -459,10 +484,9 @@ class _DashboardBodyState extends State<_DashboardBody> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                Text(
-                  value,
+                AnimatedCounter(
+                  value: value,
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

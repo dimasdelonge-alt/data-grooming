@@ -159,7 +159,15 @@ class JeniCathouseApp extends StatelessWidget {
             final roomId = settings.arguments as int;
             return MaterialPageRoute(builder: (_) => RoomDetailScreen(roomId: roomId));
           case '/financial':
-            return MaterialPageRoute(builder: (_) => const FinancialScreen());
+            return PageRouteBuilder(
+              settings: settings,
+              pageBuilder: (_, __, ___) => const FinancialScreen(enableHero: true),
+              transitionDuration: const Duration(milliseconds: 400),
+              reverseTransitionDuration: const Duration(milliseconds: 350),
+              transitionsBuilder: (_, animation, __, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+            );
           case '/deposit':
             return MaterialPageRoute(builder: (_) => const DepositScreen());
           case '/settings':

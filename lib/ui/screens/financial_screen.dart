@@ -12,9 +12,11 @@ import '../../data/entity/cat.dart';
 import '../../data/model/hotel_models.dart';
 import '../../util/currency_formatter.dart';
 import '../../data/entity/expense.dart';
+import '../theme/theme.dart';
 
 class FinancialScreen extends StatefulWidget {
-  const FinancialScreen({super.key});
+  final bool enableHero;
+  const FinancialScreen({super.key, this.enableHero = false});
 
   @override
   State<FinancialScreen> createState() => _FinancialScreenState();
@@ -335,17 +337,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
             // ─── Horizontal Summary ─────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: IntrinsicHeight(
-                child: Row(
-                  children: [
-                    Expanded(child: _SummaryItem(l10n.income, vm.monthlyIncome, Colors.green, isDark)),
-                    const VerticalDivider(width: 16),
-                    Expanded(child: _SummaryItem(l10n.expense, vm.monthlyExpense, Colors.redAccent, isDark)),
-                    const VerticalDivider(width: 16),
-                     Expanded(child: _SummaryItem(l10n.netProfit, vm.monthlyIncome - vm.monthlyExpense, Colors.blue, isDark)),
-                  ],
-                ),
-              ),
+              child: _buildSummaryCard(isDark, l10n, vm),
             ),
             const SizedBox(height: 16),
 
@@ -412,6 +404,44 @@ class _FinancialScreenState extends State<FinancialScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(bool isDark, AppLocalizations l10n, FinancialViewModel vm) {
+    final card = Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: isDark ? AppColors.darkCard : Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              Expanded(child: _SummaryItem(l10n.income, vm.monthlyIncome, Colors.green, isDark)),
+              const VerticalDivider(width: 16),
+              Expanded(child: _SummaryItem(l10n.expense, vm.monthlyExpense, Colors.redAccent, isDark)),
+              const VerticalDivider(width: 16),
+              Expanded(child: _SummaryItem(l10n.netProfit, vm.monthlyIncome - vm.monthlyExpense, Colors.blue, isDark)),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!widget.enableHero) return card;
+
+    return Hero(
+      tag: 'financial_card',
+      flightShuttleBuilder: (flightContext, animation, flightDirection, fromHeroContext, toHeroContext) {
+        return Material(
+          type: MaterialType.transparency,
+          child: toHeroContext.widget,
+        );
+      },
+      child: Material(
+        type: MaterialType.transparency,
+        child: card,
       ),
     );
   }
