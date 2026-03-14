@@ -480,5 +480,20 @@
             }
         }
     },
-    "retryNow": "Retry Now"
+    "retryNow": "Retry Now",
+    "analytics": "Analytics",
+    "revenueTrend": "Revenue Trend",
+    "incomeBreakdown": "Income Breakdown",
+    "busiestDays": "Busiest Days",
+    "topCustomers": "Top Customers",
+    "popularServices": "Popular Services",
+    "commonFindings": "Common Findings",
+    "totalSessions": "Total Sessions",
+    "avgRevenuePerSession": "Avg Rev/Session",
+    "customerRetention": "Retention",
+    "thisMonth": "This Month",
+    "last3Months": "3 Months",
+    "last6Months": "6 Months",
+    "lastYear": "1 Year",
+    "allTime": "All Time"
 }

@@ -2906,6 +2906,96 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Coba Sekarang'**
   String get retryNow;
+
+  /// No description provided for @analytics.
+  ///
+  /// In id, this message translates to:
+  /// **'Analitik'**
+  String get analytics;
+
+  /// No description provided for @revenueTrend.
+  ///
+  /// In id, this message translates to:
+  /// **'Tren Pendapatan'**
+  String get revenueTrend;
+
+  /// No description provided for @incomeBreakdown.
+  ///
+  /// In id, this message translates to:
+  /// **'Rincian Pendapatan'**
+  String get incomeBreakdown;
+
+  /// No description provided for @busiestDays.
+  ///
+  /// In id, this message translates to:
+  /// **'Hari Tersibuk'**
+  String get busiestDays;
+
+  /// No description provided for @topCustomers.
+  ///
+  /// In id, this message translates to:
+  /// **'Pelanggan Teratas'**
+  String get topCustomers;
+
+  /// No description provided for @popularServices.
+  ///
+  /// In id, this message translates to:
+  /// **'Layanan Terpopuler'**
+  String get popularServices;
+
+  /// No description provided for @commonFindings.
+  ///
+  /// In id, this message translates to:
+  /// **'Kasus Sering Ditemui'**
+  String get commonFindings;
+
+  /// No description provided for @totalSessions.
+  ///
+  /// In id, this message translates to:
+  /// **'Total Sesi'**
+  String get totalSessions;
+
+  /// No description provided for @avgRevenuePerSession.
+  ///
+  /// In id, this message translates to:
+  /// **'Rata² Pendapatan'**
+  String get avgRevenuePerSession;
+
+  /// No description provided for @customerRetention.
+  ///
+  /// In id, this message translates to:
+  /// **'Retensi'**
+  String get customerRetention;
+
+  /// No description provided for @thisMonth.
+  ///
+  /// In id, this message translates to:
+  /// **'Bulan Ini'**
+  String get thisMonth;
+
+  /// No description provided for @last3Months.
+  ///
+  /// In id, this message translates to:
+  /// **'3 Bulan'**
+  String get last3Months;
+
+  /// No description provided for @last6Months.
+  ///
+  /// In id, this message translates to:
+  /// **'6 Bulan'**
+  String get last6Months;
+
+  /// No description provided for @lastYear.
+  ///
+  /// In id, this message translates to:
+  /// **'1 Tahun'**
+  String get lastYear;
+
+  /// No description provided for @allTime.
+  ///
+  /// In id, this message translates to:
+  /// **'Semua'**
+  String get allTime;
 }
 
 class _AppLocalizationsDelegate

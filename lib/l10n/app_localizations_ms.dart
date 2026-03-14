@@ -1543,4 +1543,49 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get retryNow => 'Cuba Sekarang';
+
+  @override
+  String get analytics => 'Analitik';
+
+  @override
+  String get revenueTrend => 'Tren Pendapatan';
+
+  @override
+  String get incomeBreakdown => 'Pecahan Pendapatan';
+
+  @override
+  String get busiestDays => 'Hari Tersibuk';
+
+  @override
+  String get topCustomers => 'Pelanggan Teratas';
+
+  @override
+  String get popularServices => 'Perkhidmatan Popular';
+
+  @override
+  String get commonFindings => 'Kes Biasa Ditemui';
+
+  @override
+  String get totalSessions => 'Jumlah Sesi';
+
+  @override
+  String get avgRevenuePerSession => 'Purata Pendapatan';
+
+  @override
+  String get customerRetention => 'Retensi';
+
+  @override
+  String get thisMonth => 'Bulan Ini';
+
+  @override
+  String get last3Months => '3 Bulan';
+
+  @override
+  String get last6Months => '6 Bulan';
+
+  @override
+  String get lastYear => '1 Tahun';
+
+  @override
+  String get allTime => 'Semua';
 }

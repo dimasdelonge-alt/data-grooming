@@ -1540,4 +1540,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get retryNow => 'Retry Now';
+
+  @override
+  String get analytics => 'Analytics';
+
+  @override
+  String get revenueTrend => 'Revenue Trend';
+
+  @override
+  String get incomeBreakdown => 'Income Breakdown';
+
+  @override
+  String get busiestDays => 'Busiest Days';
+
+  @override
+  String get topCustomers => 'Top Customers';
+
+  @override
+  String get popularServices => 'Popular Services';
+
+  @override
+  String get commonFindings => 'Common Findings';
+
+  @override
+  String get totalSessions => 'Total Sessions';
+
+  @override
+  String get avgRevenuePerSession => 'Avg Rev/Session';
+
+  @override
+  String get customerRetention => 'Retention';
+
+  @override
+  String get thisMonth => 'This Month';
+
+  @override
+  String get last3Months => '3 Months';
+
+  @override
+  String get last6Months => '6 Months';
+
+  @override
+  String get lastYear => '1 Year';
+
+  @override
+  String get allTime => 'All Time';
 }

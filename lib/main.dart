@@ -19,6 +19,7 @@ import 'util/notification_service.dart';
 import 'ui/grooming_view_model.dart';
 import 'ui/hotel_view_model.dart';
 import 'ui/financial_view_model.dart';
+import 'ui/analytics_view_model.dart';
 import 'ui/theme/theme.dart';
 import 'ui/screens/dashboard_screen.dart';
 import 'ui/screens/cat_list_screen.dart';
@@ -38,6 +39,7 @@ import 'ui/screens/settings_screen.dart';
 import 'ui/screens/account_screen.dart';
 import 'ui/screens/lock_screen.dart';
 import 'ui/screens/login_screen.dart';
+import 'ui/screens/analytics_screen.dart';
 import 'util/security_preferences.dart';
 
 void main() async {
@@ -80,6 +82,9 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => FinancialViewModel(repository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AnalyticsViewModel(repository),
         ),
       ],
       child: const JeniCathouseApp(),
@@ -174,6 +179,8 @@ class JeniCathouseApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const SettingsScreen());
           case '/account':
             return MaterialPageRoute(builder: (_) => const AccountScreen());
+          case '/analytics':
+            return MaterialPageRoute(builder: (_) => const AnalyticsScreen());
           default:
             return null;
         }
@@ -212,7 +219,7 @@ class _MainShellState extends State<MainShell> {
   // Pages — Dashboard is real, others are placeholders until built
   final List<Widget> _pages = const [
     DashboardScreen(),
-    SessionListScreen(),
+    AnalyticsScreen(),
     SizedBox(), // FAB placeholder (index 2 is never shown)
     FinancialScreen(),
     AccountScreen(),
@@ -292,8 +299,8 @@ class _MainShellState extends State<MainShell> {
                 index: 0,
               ),
               _NavItem(
-                icon: Icons.history_rounded,
-                label: l10n.activity,
+                icon: Icons.insights_rounded,
+                label: l10n.analytics,
                 isSelected: _currentIndex == 1,
                 onTap: () => _onTabTapped(1),
                 index: 1,

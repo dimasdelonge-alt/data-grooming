@@ -757,5 +757,20 @@
             }
         }
     },
-    "retryNow": "Coba Sekarang"
+    "retryNow": "Coba Sekarang",
+    "analytics": "Analitik",
+    "revenueTrend": "Tren Pendapatan",
+    "incomeBreakdown": "Rincian Pendapatan",
+    "busiestDays": "Hari Tersibuk",
+    "topCustomers": "Pelanggan Teratas",
+    "popularServices": "Layanan Terpopuler",
+    "commonFindings": "Kasus Sering Ditemui",
+    "totalSessions": "Total Sesi",
+    "avgRevenuePerSession": "Rata² Pendapatan",
+    "customerRetention": "Retensi",
+    "thisMonth": "Bulan Ini",
+    "last3Months": "3 Bulan",
+    "last6Months": "6 Bulan",
+    "lastYear": "1 Tahun",
+    "allTime": "Semua"
 }

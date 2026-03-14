@@ -480,5 +480,20 @@
             }
         }
     },
-    "retryNow": "Cuba Sekarang"
+    "retryNow": "Cuba Sekarang",
+    "analytics": "Analitik",
+    "revenueTrend": "Tren Pendapatan",
+    "incomeBreakdown": "Pecahan Pendapatan",
+    "busiestDays": "Hari Tersibuk",
+    "topCustomers": "Pelanggan Teratas",
+    "popularServices": "Perkhidmatan Popular",
+    "commonFindings": "Kes Biasa Ditemui",
+    "totalSessions": "Jumlah Sesi",
+    "avgRevenuePerSession": "Purata Pendapatan",
+    "customerRetention": "Retensi",
+    "thisMonth": "Bulan Ini",
+    "last3Months": "3 Bulan",
+    "last6Months": "6 Bulan",
+    "lastYear": "1 Tahun",
+    "allTime": "Semua"
 }
