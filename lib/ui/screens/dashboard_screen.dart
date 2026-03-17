@@ -134,9 +134,12 @@ class _DashboardBodyState extends State<_DashboardBody> {
                         itemBuilder: (context, index) {
                           final session = vm.recentSessions[index];
                           final cat = vm.allCats.where((c) => c.catId == session.catId).firstOrNull;
-                          return Padding(
-                            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16, vertical: 4),
-                            child: _SessionCard(session: session, cat: cat, isDark: isDark),
+                          return _StaggeredFadeIn(
+                            index: index,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16, vertical: 4),
+                              child: _SessionCard(session: session, cat: cat, isDark: isDark),
+                            ),
                           );
                         },
                       ),
@@ -169,9 +172,12 @@ class _DashboardBodyState extends State<_DashboardBody> {
                         itemCount: vm.allCats.length.clamp(0, 5),
                         itemBuilder: (context, index) {
                           final cat = vm.allCats[index];
-                          return Padding(
-                            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16, vertical: 4),
-                            child: _CatCard(cat: cat, isDark: isDark),
+                          return _StaggeredFadeIn(
+                            index: index,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16, vertical: 4),
+                              child: _CatCard(cat: cat, isDark: isDark),
+                            ),
                           );
                         },
                       ),
@@ -554,60 +560,62 @@ class _DashboardBodyState extends State<_DashboardBody> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _buildActiveBanner(BuildContext context, GroomingViewModel vm, bool isDark, AppLocalizations l10n) {
-    return InkWell(
-      onTap: () => Navigator.pushNamed(context, '/session_entry'),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark
-                ? [AppColors.accentBlue.withValues(alpha: 0.2), AppColors.accentPurple.withValues(alpha: 0.2)]
-                : [AppColors.lightPrimary.withValues(alpha: 0.1), AppColors.lightSecondary.withValues(alpha: 0.1)],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: (isDark ? AppColors.accentBlue : AppColors.lightPrimary).withValues(alpha: 0.3),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: (isDark ? AppColors.accentBlue : AppColors.lightPrimary).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.pets_rounded,
-                color: isDark ? AppColors.accentBlue : AppColors.lightPrimary,
-              ),
+    return _BreathAnimation(
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(context, '/session_entry'),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [AppColors.accentBlue.withValues(alpha: 0.2), AppColors.accentPurple.withValues(alpha: 0.2)]
+                  : [AppColors.lightPrimary.withValues(alpha: 0.1), AppColors.lightSecondary.withValues(alpha: 0.1)],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${vm.activeSessions.length} ${l10n.activeSessions}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                  Text(
-                    l10n.processingNow,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: (isDark ? AppColors.accentBlue : AppColors.lightPrimary).withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: (isDark ? AppColors.accentBlue : AppColors.lightPrimary).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.pets_rounded,
+                  color: Colors.white, // Standardized for banner
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${vm.activeSessions.length} ${l10n.activeSessions}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                     ),
-                  ),
-                ],
+                    Text(
+                      l10n.processingNow,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 16,
-              color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
-            ),
-          ],
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: isDark ? AppColors.darkSubtext : AppColors.lightSubtext,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1049,4 +1057,68 @@ class _FeatureItem {
   final VoidCallback onTap;
 
   const _FeatureItem(this.icon, this.label, this.colorIndex, this.onTap);
+}
+
+// ─── HELPER WIDGETS FOR ANIMATION ───────────────────────────────────────────
+
+class _StaggeredFadeIn extends StatelessWidget {
+  final int index;
+  final Widget child;
+
+  const _StaggeredFadeIn({required this.index, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 400 + (index * 100)),
+      curve: Curves.easeOut,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+class _BreathAnimation extends StatefulWidget {
+  final Widget child;
+  const _BreathAnimation({required this.child});
+
+  @override
+  State<_BreathAnimation> createState() => _BreathAnimationState();
+}
+
+class _BreathAnimationState extends State<_BreathAnimation> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 1.0, end: 1.02).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(scale: _animation, child: widget.child);
+  }
 }

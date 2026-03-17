@@ -2,71 +2,28 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 /// A simple donut chart using CustomPainter.
-class DonutChart extends StatelessWidget {
-  final List<DonutSegment> segments;
-  final double size;
-  final String? centerLabel;
-  final String? centerValue;
+class DonutSegment {
+  final String label;
+  final double value;
+  final Color color;
 
-  const DonutChart({
-    super.key,
-    required this.segments,
-    this.size = 160,
-    this.centerLabel,
-    this.centerValue,
+  const DonutSegment({
+    required this.label,
+    required this.value,
+    required this.color,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CustomPaint(
-            size: Size(size, size),
-            painter: _DonutChartPainter(
-              segments: segments,
-              isDark: isDark,
-            ),
-          ),
-          if (centerLabel != null || centerValue != null)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (centerValue != null)
-                  Text(
-                    centerValue!,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                if (centerLabel != null)
-                  Text(
-                    centerLabel!,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isDark ? Colors.white54 : Colors.black45,
-                    ),
-                  ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
 }
 
 class _DonutChartPainter extends CustomPainter {
   final List<DonutSegment> segments;
   final bool isDark;
+  final double animationValue;
 
-  _DonutChartPainter({required this.segments, required this.isDark});
+  _DonutChartPainter({
+    required this.segments, 
+    required this.isDark,
+    this.animationValue = 1.0,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -82,7 +39,9 @@ class _DonutChartPainter extends CustomPainter {
     double startAngle = -math.pi / 2; // Start from top
 
     for (final segment in segments) {
-      final sweepAngle = (segment.value / total) * 2 * math.pi;
+      final sweepAngle = (segment.value / total) * 2 * math.pi * animationValue;
+
+      if (sweepAngle <= 0) continue;
 
       final paint = Paint()
         ..style = PaintingStyle.stroke
@@ -103,17 +62,100 @@ class _DonutChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _DonutChartPainter oldDelegate) => 
+      oldDelegate.animationValue != animationValue || oldDelegate.segments != segments;
 }
 
-class DonutSegment {
-  final String label;
-  final double value;
-  final Color color;
+class DonutChart extends StatefulWidget {
+  final List<DonutSegment> segments;
+  final double size;
+  final String? centerLabel;
+  final String? centerValue;
 
-  const DonutSegment({
-    required this.label,
-    required this.value,
-    required this.color,
+  const DonutChart({
+    super.key,
+    required this.segments,
+    this.size = 160,
+    this.centerLabel,
+    this.centerValue,
   });
+
+  @override
+  State<DonutChart> createState() => _DonutChartState();
+}
+
+class _DonutChartState extends State<DonutChart> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return SizedBox(
+          width: widget.size,
+          height: widget.size,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CustomPaint(
+                size: Size(widget.size, widget.size),
+                painter: _DonutChartPainter(
+                  segments: widget.segments,
+                  isDark: isDark,
+                  animationValue: _animation.value,
+                ),
+              ),
+              if (widget.centerLabel != null || widget.centerValue != null)
+                Opacity(
+                  opacity: _animation.value,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.centerValue != null)
+                        Text(
+                          widget.centerValue!,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      if (widget.centerLabel != null)
+                        Text(
+                          widget.centerLabel!,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isDark ? Colors.white54 : Colors.black45,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

@@ -20,20 +20,21 @@ class AppColors {
   static const Color lightSecondary = Color(0xFF0288D1);
   static const Color lightSubtext = Color(0xFF6B7280);
 
-  // ── Dark Mode — Colorful on Dark ───────────────────────────────────────
-  static const Color darkBackground = Color(0xFF1A1A2E);
-  static const Color darkDeepBackground = Color(0xFF0F0F1E);
-  static const Color darkSurface = Color(0xFF16213E);
-  static const Color darkCard = Color(0xFF1E293B);
-  static const Color darkOnSurface = Color(0xFFE2E8F0);
-  static const Color darkText = Color(0xFFE2E8F0);
+  // ── Dark Mode — Premium Pitch Black ──────────────────────────────────
+  static const Color darkBackground = Color(0xFF000000);
+  static const Color darkDeepBackground = Color(0xFF000000);
+  static const Color darkSurface = Color(0xFF0A0A0A);
+  static const Color darkCard = Color(0xFF111111);
+  static const Color darkOnSurface = Color(0xFFF8FAFC);
+  static const Color darkText = Color(0xFFF8FAFC);
   static const Color darkSubtext = Color(0xFF94A3B8);
+  static const Color darkBorder = Color(0xFF1E1E1E);
 
-  // ── Dark Mode Accent Colors ────────────────────────────────────────────
-  static const Color accentPurple = Color(0xFFA78BFA);
+  // ── Dark Mode Accent Colors (Neon) ────────────────────────────────────
+  static const Color accentPurple = Color(0xFFC084FC);
   static const Color accentBlue = Color(0xFF60A5FA);
-  static const Color accentGreen = Color(0xFF34D399);
-  static const Color accentYellow = Color(0xFFFBBF24);
+  static const Color accentGreen = Color(0xFF4ADE80);
+  static const Color accentYellow = Color(0xFFFCD34D);
 
   /// Returns rotating accent color based on index (for dark mode grid icons)
   static Color accentByIndex(int index) {

@@ -35,6 +35,7 @@ dependencies:
   flutter_image_compress: ^2.1.0
   pdf: ^3.10.8
   lottie: ^3.1.0
+  animations: ^2.0.11
 
   printing: 5.13.1
   archive: ^3.3.7

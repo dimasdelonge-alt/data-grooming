@@ -8,6 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:datagrooming_v3/l10n/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:animations/animations.dart';
 
 import 'data/source/database_helper.dart';
 import 'data/source/grooming_dao.dart';
@@ -133,7 +134,18 @@ class JeniCathouseApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => CatEntryScreen(catId: catId));
           case '/cat_detail':
             final catId = settings.arguments as int;
-            return MaterialPageRoute(builder: (_) => CatDetailScreen(catId: catId));
+            return PageRouteBuilder(
+              settings: settings,
+              pageBuilder: (context, animation, secondaryAnimation) => CatDetailScreen(catId: catId),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return SharedAxisTransition(
+                  animation: animation,
+                  secondaryAnimation: secondaryAnimation,
+                  transitionType: SharedAxisTransitionType.scaled,
+                  child: child,
+                );
+              },
+            );
           case '/session_entry':
             final args = settings.arguments;
             int? sessionId;
@@ -166,11 +178,14 @@ class JeniCathouseApp extends StatelessWidget {
           case '/financial':
             return PageRouteBuilder(
               settings: settings,
-              pageBuilder: (_, __, ___) => const FinancialScreen(enableHero: true),
-              transitionDuration: const Duration(milliseconds: 400),
-              reverseTransitionDuration: const Duration(milliseconds: 350),
-              transitionsBuilder: (_, animation, __, child) {
-                return FadeTransition(opacity: animation, child: child);
+              pageBuilder: (context, animation, secondaryAnimation) => const FinancialScreen(enableHero: true),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return SharedAxisTransition(
+                  animation: animation,
+                  secondaryAnimation: secondaryAnimation,
+                  transitionType: SharedAxisTransitionType.horizontal,
+                  child: child,
+                );
               },
             );
           case '/deposit':
